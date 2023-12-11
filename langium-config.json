@@ -1,0 +1,12 @@
+{
+    "projectName": "QuoicouBeats",
+    "languages": [{
+        "id": "quoicou-beats",
+        "grammar": "src/language/quoicou-beats.langium",
+        "fileExtensions": [".qb"],
+        "textMate": {
+            "out": "syntaxes/quoicou-beats.tmLanguage.json"
+        }
+    }],
+    "out": "src/language/generated"
+}
