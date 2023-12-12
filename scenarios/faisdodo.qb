@@ -1,0 +1,33 @@
+Music "Tchoin" {
+    Tempo 176
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Principal" {
+            Instrument 1
+
+            Do blanche
+            La noire
+            Sol blanche
+
+            Sol noire
+            La noire
+            Sol noire
+            La noire
+
+            Si blanche
+            Sol noire
+
+            Si blanche
+            La noire
+            Sol blanche
+
+            Sol noire
+            La noire
+            Si noire
+            La noire
+            Sol noire
+        }
+    }
+}

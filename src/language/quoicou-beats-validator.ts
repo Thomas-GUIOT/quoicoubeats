@@ -1,5 +1,5 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import type { QuoicouBeatsAstType, Person } from './generated/ast.js';
+import type {Music, QuoicouBeatsAstType} from './generated/ast.js';
 import type { QuoicouBeatsServices } from './quoicou-beats-module.js';
 
 /**
@@ -9,7 +9,7 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.QuoicouBeatsValidator;
     const checks: ValidationChecks<QuoicouBeatsAstType> = {
-        Person: validator.checkPersonStartsWithCapital
+        Music: [validator.checkTicksIsUnder128.bind(validator)]
     };
     registry.register(checks, validator);
 }
@@ -19,12 +19,9 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
  */
 export class QuoicouBeatsValidator {
 
-    checkPersonStartsWithCapital(person: Person, accept: ValidationAcceptor): void {
-        if (person.name) {
-            const firstChar = person.name.substring(0, 1);
-            if (firstChar.toUpperCase() !== firstChar) {
-                accept('warning', 'Person name should start with a capital.', { node: person, property: 'name' });
-            }
+    checkTicksIsUnder128(music: Music, accept: ValidationAcceptor): void {
+        if (parseInt(music.tickCount) > 128) {
+            accept('warning', 'Song definition cannot be higher than 128.', { node: music, property: 'tickCount' });
         }
     }
 

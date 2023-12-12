@@ -1,4 +1,4 @@
-import type { Model } from '../language/generated/ast.js';
+import type { Music } from '../language/generated/ast.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { QuoicouBeatsLanguageMetaData } from '../language/generated/module.js';
@@ -16,7 +16,7 @@ const packageContent = await fs.readFile(packagePath, 'utf-8');
 
 export const generateAction = async (fileName: string, opts: GenerateOptions): Promise<void> => {
     const services = createQuoicouBeatsServices(NodeFileSystem).QuoicouBeats;
-    const model = await extractAstNode<Model>(fileName, services);
+    const model = await extractAstNode<Music>(fileName, services);
     const generatedFilePath = generateJavaScript(model, fileName, opts.destination);
     console.log(chalk.green(`JavaScript code generated successfully: ${generatedFilePath}`));
 };

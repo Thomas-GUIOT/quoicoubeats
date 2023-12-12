@@ -1,0 +1,38 @@
+Music "Tchoin" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Piano" {
+            Instrument 1
+
+            Sol croche
+            Sol croche
+            Do croche
+            Re# croche
+            Re# croche
+            Silence croche
+            Sol# croche
+            Sol# croche
+            Silence croche
+            Re croche
+            Fa croche
+            Silence croche
+
+            Sol croche
+            Sol croche
+            Do croche
+            Re# croche
+            Re# croche
+            Silence croche
+            Sol# croche
+            Sol# croche
+            Silence croche
+            Re croche
+            Fa croche
+            Silence croche
+        }
+
+    }
+}
