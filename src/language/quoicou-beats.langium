@@ -32,4 +32,4 @@ hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
 terminal INT: /[0-9]+/;
 terminal STRING: /"([^"\\]|\\.)*"/;
-terminal NOTE: /(Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;
+terminal NOTE: /(Silence|Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;
