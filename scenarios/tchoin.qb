@@ -4,7 +4,7 @@ Music "Tchoin" {
     Ticks 128
 
     Tracks {
-        Track "Principal" {
+        Track "Piano" {
             Instrument 1
 
             Sol croche
@@ -32,7 +32,7 @@ Music "Tchoin" {
             Re croche
             Fa croche
             Silence croche
-
         }
+
     }
 }

@@ -38,24 +38,32 @@ export function generateJavaScript(music: Music, filePath: string, destination: 
     const numerator = parseInt(music.numerator);
     const denominator = parseInt(music.denominator);
     let midiTracks: MidiWriter.Track[] = [];
+    let silence : number = 0;
+    let channel : number = 1;
     music.tracks.tracks.forEach(track => {
+        channel++;
         const trackMidi = new MidiWriter.Track();
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: 1}));
+        trackMidi.addInstrumentName(track.name);
+        trackMidi.setTempo(parseInt(music.tempo));
         track.notes.forEach(note => {
             if (note.note === 'Silence') {
-                trackMidi.addEvent(new MidiWriter.NoteEvent({
-                    pitch: [noteToMidi('Do')],
-                    duration: noteTypeToDuration(note.noteType),
-                    velocity: 1
-                }));
+                silence += parseInt(noteTypeToDuration(note.noteType));
+                console.log(silence);
                 return;
             }
-            trackMidi.addEvent(new MidiWriter.NoteEvent({
+            let noteOptions: any = {
                 pitch: [noteToMidi(note.note)],
                 duration: noteTypeToDuration(note.noteType),
-                velocity: 100
-            }));
+                velocity: 100,
+                channel: channel,
+            };
+            if (silence > 0) {
+                noteOptions.wait = noteTypeToDuration(note.noteType);
+            }
+            trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
+            silence = 0;
         });
         midiTracks.push(trackMidi)
     });

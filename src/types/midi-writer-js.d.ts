@@ -8,6 +8,8 @@ declare module 'midi-writer-js' {
     export class Track {
         constructor();
         addEvent(event: NoteEvent | ProgramChangeEvent, options?: {sequential?: boolean, simultaneous?: boolean}): void;
+        addInstrumentName(name: string): void;
+        setTempo(bpm: number): void;
     }
 
     export class NoteEvent {
