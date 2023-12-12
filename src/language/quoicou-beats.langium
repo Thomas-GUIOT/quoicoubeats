@@ -1,18 +1,35 @@
 grammar QuoicouBeats
 
-entry Model:
-    (persons+=Person | greetings+=Greeting)*;
+entry Music:
+    'Music' name=STRING '{'
+        'Tempo' tempo=INT
+        'Time' 'Signature' numerator=INT '/' denominator=INT
+        'Ticks' tickCount=INT
+        tracks=Tracks
+    '}';
 
-Person:
-    'person' name=ID;
+Tracks:
+    'Tracks' '{'
+        (tracks+=Track)+
+    '}';
 
-Greeting:
-    'Hello' person=[Person:ID] '!';
+Track:
+    'Track' name=STRING '{'
+        instrument=Instrument
+        (notes+=Note)+
+    '}';
 
+Note:
+    note=NOTE noteType=NoteType;
+
+Instrument:
+    'Instrument' instrument=INT;
+
+
+
+terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche/;
 hidden terminal WS: /\s+/;
-terminal ID: /[_a-zA-Z][\w_]*/;
-terminal INT returns number: /[0-9]+/;
-terminal STRING: /"(\\.|[^"\\])*"|'(\\.|[^'\\])*'/;
-
-hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
-hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
+terminal ID: /[a-zA-Z_]\w*/;
+terminal INT: /[0-9]+/;
+terminal STRING: /"([^"\\]|\\.)*"/;
+terminal NOTE: /(Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;

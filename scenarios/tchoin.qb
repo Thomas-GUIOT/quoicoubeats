@@ -1,0 +1,33 @@
+Music "Fais Dodo" {
+    Tempo 160
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Principal" {
+            Instrument 1
+
+            Sol noire
+            Sol noire
+            Do noire
+            Do# noire
+            Do# blanche
+            Sol# noire
+            Sol# blanche
+            Re noire
+            Fa noire
+            Fa blanche
+
+            Sol noire
+            Sol noire
+            Do noire
+            Do# noire
+            Do# blanche
+            Sol# noire
+            Sol# blanche
+            Re noire
+            Fa noire
+            Fa blanche
+        }
+    }
+}
