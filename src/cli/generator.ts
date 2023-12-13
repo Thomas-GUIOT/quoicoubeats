@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {Music} from "../language/generated/ast.js";
+import {isNote, Music} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
@@ -47,10 +47,30 @@ export function generateJavaScript(music: Music, filePath: string, destination: 
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: 1}));
         trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(parseInt(music.tempo));
-        track.notes.forEach(note => {
+        const notes = track.notesOrPatterns.flatMap(noteOrPattern => {
+            if (isNote(noteOrPattern)) {
+                return noteOrPattern;
+            } else {
+                console.log(music.patterns)
+                const pattern = music.patterns.find(pattern => pattern.name === noteOrPattern.pattern.ref?.name);
+                if (pattern) {
+                    let patternNotes: any[] = [];
+                    let repeatCount = 1;
+                    if (noteOrPattern.repeatCount != null) {
+                        repeatCount = parseInt(noteOrPattern.repeatCount);
+                    }
+                    for (let i = 0; i < repeatCount; i++) {
+                        patternNotes = patternNotes.concat(pattern.notes);
+                    }
+                    return patternNotes;
+                } else {
+                    return [];
+                }
+            }
+        });
+        notes.forEach(note => {
             if (note.note === 'Silence') {
                 silence += parseInt(noteTypeToDuration(note.noteType));
-                console.log(silence);
                 return;
             }
             let noteOptions: any = {
