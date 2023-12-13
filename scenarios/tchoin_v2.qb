@@ -1,6 +1,6 @@
 Music "Tchoin" {
     Tempo 180
-    TimeSignature 4/4
+    Time Signature 4/4
     Ticks 128
 
     declare "Piano" {
@@ -21,7 +21,7 @@ Music "Tchoin" {
     Tracks {
         Track "Piano" {
             Instrument 1
-            pattern "Piano" x360
+            pattern "Piano" x12
         }
     }
 }
