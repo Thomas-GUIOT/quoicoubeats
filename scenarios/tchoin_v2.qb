@@ -1,0 +1,27 @@
+Music "Tchoin" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 128
+
+    declare "Piano" {
+        Sol croche
+        Sol croche
+        Do croche
+        Re# croche
+        Re# croche
+        Silence croche
+        Sol# croche
+        Sol# croche
+        Silence croche
+        Re croche
+        Fa croche
+        Silence croche
+    }
+
+    Tracks {
+        Track "Piano" {
+            Instrument 1
+            pattern "Piano" x360
+        }
+    }
+}
