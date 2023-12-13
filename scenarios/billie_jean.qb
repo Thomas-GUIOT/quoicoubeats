@@ -1,0 +1,14 @@
+Music "Billie Jean" {
+    Tempo 117
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Drums" {
+            Instrument 10
+            kd 1 0 0 0 1 0 0 0
+            sd 0 0 1 0 0 0 1 0
+            ch 1 1 1 1 1 1 1 1
+        }
+    }
+}

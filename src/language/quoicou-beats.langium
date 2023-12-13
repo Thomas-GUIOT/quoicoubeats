@@ -26,7 +26,10 @@ Track:
     '}';
 
 PatternOrNote:
-    Note | PatternReference;
+    Note | PatternReference | DrumNote;
+
+DrumNote:
+    note=DRUMNOTE (bars+=INT)+;
 
 PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
@@ -37,10 +40,10 @@ Note:
 Instrument:
     'Instrument' instrument=INT;
 
-
+terminal DRUMNOTE: /kd|sd|ch/;
+terminal INT: /[0-9]+/;
 terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche/;
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
-terminal INT: /[0-9]+/;
 terminal STRING: /"([^"\\]|\\.)*"/;
 terminal NOTE: /(Silence|Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;

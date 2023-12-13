@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {isNote, Music} from "../language/generated/ast.js";
+import {isDrumNote, isNote, Music} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
@@ -31,6 +31,23 @@ function noteTypeToDuration(noteType: string): string {
     }
 }
 
+function getDrumInstrument(note: string): number {
+    switch (note) {
+        case 'kd':
+        case 'bd':
+            return 35;
+        case 'sd':
+            return 38;
+        case 'hh':
+        case 'ch':
+            return 42;
+        case 'oh':
+            return 46;
+        default:
+            return 56;
+    }
+}
+
 export function generateJavaScript(music: Music, filePath: string, destination: string | undefined): string {
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.mid`;
@@ -41,17 +58,19 @@ export function generateJavaScript(music: Music, filePath: string, destination: 
     let silence : number = 0;
     let channel : number = 1;
     music.tracks.tracks.forEach(track => {
-        channel++;
         const trackMidi = new MidiWriter.Track();
+        const instrument = parseInt(track.instrument.instrument);
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
-        trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: 1}));
+        trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrument}));
         trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(parseInt(music.tempo));
         const notes = track.notesOrPatterns.flatMap(noteOrPattern => {
             if (isNote(noteOrPattern)) {
                 return noteOrPattern;
-            } else {
-                console.log(music.patterns)
+            } if (isDrumNote(noteOrPattern)) {
+                return noteOrPattern;
+            }
+            else {
                 const pattern = music.patterns.find(pattern => pattern.name === noteOrPattern.pattern.ref?.name);
                 if (pattern) {
                     let patternNotes: any[] = [];
@@ -68,23 +87,43 @@ export function generateJavaScript(music: Music, filePath: string, destination: 
                 }
             }
         });
-        notes.forEach(note => {
-            if (note.note === 'Silence') {
-                silence += parseInt(noteTypeToDuration(note.noteType));
-                return;
+        if (instrument === 10) {
+            const len = notes[0].bars.length;
+            for (let i=0; i<len; ++i) {
+                const batterie = notes.map(note => [note.note, note.bars[i]]);
+                const toPlay = batterie
+                    .filter(instrument => instrument[1] === 1)
+                    .map(instrument => instrument[0]);
+                if (toPlay.length === 0) {
+                    continue;
+                }
+                const noteOptions: any = {
+                    pitch: toPlay.map(note => getDrumInstrument(note)),
+                    velocity: 100,
+                    duration: 'd2',
+                    channel: 10,
+                };
+                trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
             }
-            let noteOptions: any = {
-                pitch: [noteToMidi(note.note)],
-                duration: noteTypeToDuration(note.noteType),
-                velocity: 100,
-                channel: channel,
-            };
-            if (silence > 0) {
-                noteOptions.wait = noteTypeToDuration(note.noteType);
-            }
-            trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
-            silence = 0;
-        });
+        } else {
+            notes.forEach(note => {
+                if (note.note === 'Silence') {
+                    silence += parseInt(noteTypeToDuration(note.noteType));
+                    return;
+                }
+                let noteOptions: any = {
+                    pitch: [noteToMidi(note.note)],
+                    duration: noteTypeToDuration(note.noteType),
+                    velocity: 100,
+                    channel: channel,
+                };
+                if (silence > 0) {
+                    noteOptions.wait = noteTypeToDuration(note.noteType);
+                }
+                trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
+                silence = 0;
+            });
+        }
         midiTracks.push(trackMidi)
     });
 
