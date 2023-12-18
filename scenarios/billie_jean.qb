@@ -5,7 +5,7 @@ Music "Billie Jean" {
 
     Tracks {
         Track "Drums" {
-            Instrument 10
+            Instrument "Drums"
             kd 1 0 0 0 1 0 0 0
             sd 0 0 1 0 0 0 1 0
             ch 1 1 1 1 1 1 1 1

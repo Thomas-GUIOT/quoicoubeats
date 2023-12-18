@@ -3,7 +3,12 @@ import { extractDestinationAndName } from './cli-util.js';
 import {isDrumNote, isNote, Music} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
-import instruments from '../instruments.json';
+
+// get content of ../instruments.json in ES6
+const instruments = JSON.parse(fs.readFileSync('./instruments.json', 'utf8'));
+
+
+console.log(instruments);
 
 function noteToMidi(note: string): number {
     // TODO: modifier pour prendre en compte les octaves
@@ -60,7 +65,7 @@ export function generateJavaScript(music: Music, filePath: string, destination: 
     let channel : number = 1;
     music.tracks.tracks.forEach(track => {
         const trackMidi = new MidiWriter.Track();
-        const instrumentNumber = parseInt(Object.entries(instruments).find(([_, valeur]) => valeur === track.instrument.instrument)?.[0] ?? '0');
+        const instrumentNumber = instruments[track.instrument.instrument];
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
         trackMidi.addInstrumentName(track.name);
