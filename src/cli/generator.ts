@@ -7,7 +7,6 @@ import * as fs from "fs";
 // get content of ../instruments.json in ES6
 const instruments = JSON.parse(fs.readFileSync('./instruments.json', 'utf8'));
 
-
 console.log(instruments);
 
 function noteToMidi(note: string): number {
