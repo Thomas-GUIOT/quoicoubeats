@@ -1,7 +1,7 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
 import type {Music, QuoicouBeatsAstType} from './generated/ast.js';
 import type { QuoicouBeatsServices } from './quoicou-beats-module.js';
-import instruments from '../instruments.json';
+import instruments from '../instruments.json' assert { type: 'json' };
 
 /**
  * Register custom validation checks.
