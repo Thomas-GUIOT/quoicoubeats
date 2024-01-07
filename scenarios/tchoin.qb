@@ -6,7 +6,6 @@ Music "Tchoin" {
     Tracks {
         Track "Piano" {
             Instrument 1
-
             Sol croche
             Sol croche
             Do croche

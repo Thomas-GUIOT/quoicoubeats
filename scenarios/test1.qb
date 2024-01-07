@@ -1,0 +1,17 @@
+Music "Tchoin" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Piano" {
+            Instrument 1
+            Notes {
+                Do 4 ronde
+                Re 4 croche (croche)
+                Mi 4 ronde (croche)
+                Fa 4 ronde (croche)
+            }
+        }
+    }
+}

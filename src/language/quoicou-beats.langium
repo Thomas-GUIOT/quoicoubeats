@@ -22,7 +22,9 @@ Tracks:
 Track:
     'Track' name=STRING '{'
         instrument=Instrument
-        (notesOrPatterns+=PatternOrNote)+
+        'Notes' '{'
+            (notes+=Note)+
+        '}'
     '}';
 
 PatternOrNote:
@@ -35,7 +37,7 @@ PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
 
 Note:
-    note=NOTE noteType=NoteType;
+    note=NOTE octave=INT noteType=NoteType (('(' (delay+=NoteType)* ')')? | ('[' (pause+=NoteType)* ']')?);
 
 Instrument:
     'Instrument' instrument=INT;
