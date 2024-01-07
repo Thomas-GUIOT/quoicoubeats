@@ -16,6 +16,14 @@ declare module 'midi-writer-js' {
         constructor(options: {pitch: string[] | number[], duration: string, wait?: string, velocity?: number, channel?: number});
     }
 
+    export class NoteOnEvent {
+        constructor(options: {pitch: string[] | number[], duration: string, wait?: string, velocity?: number, channel?: number});
+    }
+
+    export class NoteOffEvent {
+        constructor(options: {pitch: string[] | number[], duration: string, wait?: string, velocity?: number, channel?: number});
+    }
+
     export class ProgramChangeEvent {
         constructor(options: {instrument: number, channel?: number});
     }

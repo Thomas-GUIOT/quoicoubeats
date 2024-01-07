@@ -6,17 +6,14 @@ entry Music:
         'Time' 'Signature' numerator=INT '/' denominator=INT
         'Ticks' tickCount=INT
         (patterns+=PatternDeclaration)*
-        tracks=Tracks
+        'Tracks' '{'
+            (tracks+=Track)+
+        '}'
     '}';
 
 PatternDeclaration:
     'declare' name=STRING '{'
         (notes+=Note)+
-    '}';
-
-Tracks:
-    'Tracks' '{'
-        (tracks+=Track)+
     '}';
 
 Track:
@@ -37,7 +34,7 @@ PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
 
 Note:
-    note=NOTE octave=INT noteType=NoteType (('(' (delay+=NoteType)* ')')? | ('[' (pause+=NoteType)* ']')?);
+    note=NOTE octave=INT noteType=NoteType ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
 
 Instrument:
     'Instrument' instrument=INT;
