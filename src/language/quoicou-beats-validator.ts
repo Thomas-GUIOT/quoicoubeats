@@ -67,6 +67,9 @@ export class QuoicouBeatsValidator {
         const alreadyDefinedKey: String[] = [];
         const alreadyDefinedNote: String[] = [];
         for(const binding of bindings) {
+            // Si ce n'est pas en majuscule, erreur
+            if(!binding.key) accept('error', `The key is not recognized. Must be [A-Z] in uppercase, or 'Space'.`, { node: binding })
+
             if(alreadyDefinedKey.includes(binding.key)) accept('error', `The key ${binding.key} is already used.`, { node: binding })
             if(alreadyDefinedNote.includes(binding.note)) accept('error', `The note ${binding.note} is already used.`, { node: binding })
             alreadyDefinedKey.push(binding.key);
