@@ -1,5 +1,5 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import type {Music, QuoicouBeatsAstType} from './generated/ast.js';
+import {Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
 import type { QuoicouBeatsServices } from './quoicou-beats-module.js';
 import instruments from '../instruments.json' assert { type: 'json' };
 
@@ -13,7 +13,9 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
         Music: [validator.checkTicksIsUnder128.bind(validator),
                 validator.checkDenominatorIsCorrect.bind(validator),
                 validator.checkNumeratorIsCorrect.bind(validator),
-                validator.checkIsValidInstrument.bind(validator)]
+                validator.checkIsValidInstrumentMusic.bind(validator)],
+        Keyboard: [validator.checkIsValidInstrumentKeyboard.bind(validator),
+                   validator.checkKeyboardIsNotAlreadyUsed.bind(validator)]
     };
     registry.register(checks, validator);
 }
@@ -22,6 +24,7 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
  * Implementation of custom validations.
  */
 export class QuoicouBeatsValidator {
+    // Validators for Music
 
     checkTicksIsUnder128(music: Music, accept: ValidationAcceptor): void {
         if (parseInt(music.tickCount) > 128) {
@@ -29,7 +32,7 @@ export class QuoicouBeatsValidator {
         }
     }
 
-    checkIsValidInstrument(music: Music, accept: ValidationAcceptor): void {
+    checkIsValidInstrumentMusic(music: Music, accept: ValidationAcceptor): void {
         for (const track of music.tracks.tracks) {
             const instrument = track.instrument.instrument;
             if (!Object.keys(instruments).includes(instrument))
@@ -48,6 +51,26 @@ export class QuoicouBeatsValidator {
         const numerator = parseInt(music.numerator);
         if (!(Number.isInteger(numerator) && numerator > 0 && [1, 2, 4, 8, 16].includes(numerator))) {
             accept('error', 'The numerator must be 1, 2, 4, 8 or 16.', { node: music, property: 'numerator' });
+        }
+    }
+
+    // Validators for Keyboard
+
+    checkIsValidInstrumentKeyboard(keyboard: Keyboard, accept: ValidationAcceptor): void {
+        const instrument = keyboard.bindingConf.instrument.instrument;
+        if (!Object.keys(instruments).includes(instrument))
+                accept('error', `Instrument ${instrument} is not supported.`, { node: keyboard.bindingConf, property: 'instrument' });
+    }
+
+    checkKeyboardIsNotAlreadyUsed(keyboard: Keyboard, accept: ValidationAcceptor): void {
+        const bindings = keyboard.bindingConf.bindings;
+        const alreadyDefinedKey: String[] = [];
+        const alreadyDefinedNote: String[] = [];
+        for(const binding of bindings) {
+            if(alreadyDefinedKey.includes(binding.key)) accept('error', `The key ${binding.key} is already used.`, { node: binding })
+            if(alreadyDefinedNote.includes(binding.note)) accept('error', `The note ${binding.note} is already used.`, { node: binding })
+            alreadyDefinedKey.push(binding.key);
+            alreadyDefinedNote.push(binding.note);
         }
     }
 }

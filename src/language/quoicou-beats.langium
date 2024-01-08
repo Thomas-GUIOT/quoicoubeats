@@ -1,6 +1,10 @@
 grammar QuoicouBeats
 
-entry Music:
+entry QuoicouBeats:
+    (music=Music)
+   (keyboard=Keyboard)?;
+
+Music:
     'Music' name=STRING '{'
         'Tempo' tempo=INT
         'Time' 'Signature' numerator=INT '/' denominator=INT
@@ -9,6 +13,19 @@ entry Music:
         tracks=Tracks
     '}';
 
+Keyboard:
+    'KeyboardBinding' '{'
+        bindingConf=InstrumentBinding
+    '}';
+
+InstrumentBinding:
+    instrument=Instrument '{'
+        (bindings+=Binding)+
+    '}';
+
+Binding:
+    'Key' key=KeyboardKey '->' note=NOTE;
+    
 PatternDeclaration:
     'declare' name=STRING '{'
         (notes+=Note)+
@@ -47,3 +64,4 @@ hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
 terminal STRING: /"([^"\\]|\\.)*"/;
 terminal NOTE: /(Silence|Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;
+terminal KeyboardKey: /[A-Z]/;
