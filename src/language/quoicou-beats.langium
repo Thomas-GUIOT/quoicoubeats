@@ -38,7 +38,7 @@ Note:
     note=NOTE noteType=NoteType;
 
 Instrument:
-    'Instrument' instrument=INT;
+    'Instrument' instrument=STRING;
 
 terminal DRUMNOTE: /kd|sd|ch/;
 terminal INT: /[0-9]+/;

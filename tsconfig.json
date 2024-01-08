@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "module": "Node16",
+    "module": "NodeNext",
     "lib": ["ESNext"],
     "sourceMap": true,
     "outDir": "out",
@@ -12,10 +12,12 @@
     "moduleResolution": "Node16",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
   },
   "include": [
-     "src/**/*.ts"
+     "src/**/*.ts",
+     "src/**/*.json"
   ],
   "exclude": [
      "out",
