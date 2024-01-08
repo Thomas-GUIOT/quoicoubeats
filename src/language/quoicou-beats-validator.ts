@@ -12,7 +12,8 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
     const checks: ValidationChecks<QuoicouBeatsAstType> = {
         Music: [validator.checkTicksIsUnder128.bind(validator),
                 validator.checkDenominatorIsCorrect.bind(validator),
-                validator.checkNumeratorIsCorrect.bind(validator)]
+                validator.checkNumeratorIsCorrect.bind(validator),
+                validator.checkIsValidInstrument.bind(validator)]
     };
     registry.register(checks, validator);
 }
