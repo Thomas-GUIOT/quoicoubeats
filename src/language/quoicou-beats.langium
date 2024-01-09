@@ -10,7 +10,9 @@ Music:
         'Time' 'Signature' numerator=INT '/' denominator=INT
         'Ticks' tickCount=INT
         (patterns+=PatternDeclaration)*
-        tracks=Tracks
+        'Tracks' '{'
+            (tracks+=Track)+
+        '}'
     '}';
 
 Keyboard:
@@ -31,15 +33,12 @@ PatternDeclaration:
         (notes+=Note)+
     '}';
 
-Tracks:
-    'Tracks' '{'
-        (tracks+=Track)+
-    '}';
-
 Track:
     'Track' name=STRING '{'
         instrument=Instrument
-        (notesOrPatterns+=PatternOrNote)+
+        'Notes' '{'
+            (notes+=Note)+
+        '}'
     '}';
 
 PatternOrNote:
@@ -52,7 +51,7 @@ PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
 
 Note:
-    note=NOTE noteType=NoteType;
+    note=NOTE octave=INT noteType=NoteType ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
 
 Instrument:
     'Instrument' instrument=STRING;

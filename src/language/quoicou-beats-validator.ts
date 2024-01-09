@@ -76,4 +76,11 @@ export class QuoicouBeatsValidator {
             alreadyDefinedNote.push(binding.note);
         }
     }
+    /**
+     * TODO: Vérifier que le delay est inférieur à la durée de la note précédente
+     * par exemple ce cas n'est pas possible :
+     *                 Re 4 noire (noire)
+     *                 Mi 4 ronde (noire)
+     * parce que la note Mi 4 est jouée avant la fin de la note Re 4 donc pas besoin de delay
+     */
 }
