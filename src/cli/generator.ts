@@ -138,21 +138,23 @@ function fillStacks(music: Music) {
             });
             previousNoteMarks = {
                 start: noteStart,
-                end: noteEnd > previousNoteMarks.end ? noteEnd : previousNoteMarks.end,
+                end: noteEnd,
             }
             // console.log(endTickMark)
             // console.log('----')
         });
     });
-    console.log('----')
+    // console.log('----')
     MIDI_ON_Stack.sort((a, b) => b.tickMark - a.tickMark);
     MIDI_OFF_Stack.sort((a, b) => b.tickMark - a.tickMark);
 
     // print both stacks
+    console.log('------STACKS------')
     console.log('MIDI_ON_Stack:')
     MIDI_ON_Stack.forEach(note => console.log(`note: ${note.note.note} tickMark: ${note.tickMark}`))
     console.log('MIDI_OFF_Stack:')
     MIDI_OFF_Stack.forEach(note => console.log(`note: ${note.note.note} tickMark: ${note.tickMark}`))
+    console.log('------------------')
 }
 
 function addOnEvent(track: MidiWriter.Track, note: any, ticks: number) {
@@ -169,7 +171,7 @@ function addOnEvent(track: MidiWriter.Track, note: any, ticks: number) {
 function addOffEvent(track: MidiWriter.Track, note: any, ticks: number, delta: number | undefined = undefined) {
     // const delayValue = note.delay.flatMap((delay: string) => delay).reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
     const duration = delta ? 0 : noteTypeToTicks(note.noteType, ticks);
-    console.log(`delta: ${delta}`)
+    // console.log(`delta: ${delta}`)
     const noteOptions: any = {
         pitch: [noteToPitch(note)],
         duration: `t${duration}`,
@@ -193,20 +195,20 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
         let off = MIDI_OFF_Stack[MIDI_OFF_Stack.length - 1];
         // console.log('INSPECT: ', util.inspect(on))
         // console.log(`on: ${JSON.stringify(on?.tickMark)} off: ${JSON.stringify(off?.tickMark)}`)
-        console.log(`on: ${on?.tickMark} off: ${off?.tickMark}`)
+        // console.log(`on: ${on?.tickMark} off: ${off?.tickMark}`)
         if (on?.tickMark < off?.tickMark) {
-            console.log('on < off')
+            // console.log('on < off')
             note = MIDI_ON_Stack.pop()?.note;
             // console.log(`on: ${JSON.stringify(note.note) + note.noteType}`)
             addOnEvent(trackMidi, note, ticks);
             previousEvents.on = on;
         } else if (on?.tickMark === off?.tickMark) {
-            console.log('equal')
+            // console.log('equal')
             note = MIDI_OFF_Stack.pop()?.note;
             addOffEvent(trackMidi, note, ticks);
             previousEvents.off = off;
         } else if (off) {
-            console.log('on > off')
+            // console.log('on > off')
             note = MIDI_OFF_Stack.pop();
             if (!note) break;
             // console.log(`off: ${JSON.stringify(note.note) + note.noteType}`)
@@ -218,7 +220,7 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
             // console.log(`note.tickMark: ${note.tickMark}`)
             let delta = note.tickMark - mostRecentEvent;
             // console.log(`tickMark: ${note.tickMark} previousEvent: ${previousEvent?.tickMark}`)
-            // console.log(`delta: ${delta}`)
+            console.log(`delta: ${delta}`)
             if (delta) addOffEvent(trackMidi, note.note, ticks, delta);
             else addOffEvent(trackMidi, note.note, ticks);
             previousEvents.off = off;
