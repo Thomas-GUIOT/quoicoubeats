@@ -33,7 +33,7 @@ export class QuoicouBeatsValidator {
     }
 
     checkIsValidInstrumentMusic(music: Music, accept: ValidationAcceptor): void {
-        for (const track of music.tracks.tracks) {
+        for (const track of music.tracks) {
             const instrument = track.instrument.instrument;
             if (!Object.keys(instruments).includes(instrument))
                 accept('error', `Instrument ${instrument} is not supported.`, { node: track, property: 'instrument' });
@@ -76,6 +76,7 @@ export class QuoicouBeatsValidator {
             alreadyDefinedNote.push(binding.note);
         }
     }
+
     /**
      * TODO: Vérifier que le delay est inférieur à la durée de la note précédente
      * par exemple ce cas n'est pas possible :

@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {Music} from "../language/generated/ast.js";
+import {QuoicouBeats, Track} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 import instruments from "../instruments.json" assert { type: 'json' };
@@ -114,35 +114,33 @@ function noteTypeToTicks(noteType: string, ticks:number): number {
     else throw new Error(`Type de note inconnu: ${noteType}`);
 }
 
-function fillStacks(music: Music) {
+function fillStacks(track: Track, tickCount: number) {
     let previousNoteMarks = {
         start: 0,
         end: 0,
     }
-    music.tracks.forEach(track => {
-        track.notes.forEach(note => {
-            // console.log(`note: ${note.note} ${note.noteType}`)
-            const endTickMark = noteTypeToTicks(note.noteType, parseInt(music.tickCount));
-            const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,parseInt(music.tickCount)), 0);
-            const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,parseInt(music.tickCount)), 0);
-            // console.log(`noteDelay: ${noteDelay}`)
-            const noteStart = noteDelay ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
-            const noteEnd = noteStart + endTickMark;
-            MIDI_ON_Stack.push({
-                tickMark: noteStart,
-                note: note,
-            });
-            MIDI_OFF_Stack.push({
-                tickMark: noteEnd,
-                note: note,
-            });
-            previousNoteMarks = {
-                start: noteStart,
-                end: noteEnd > previousNoteMarks.end ? noteEnd : previousNoteMarks.end,
-            }
-            // console.log(endTickMark)
-            // console.log('----')
+    track.notes.forEach(note => {
+        // console.log(`note: ${note.note} ${note.noteType}`)
+        const endTickMark = noteTypeToTicks(note.noteType, tickCount);
+        const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+        const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+        // console.log(`noteDelay: ${noteDelay}`)
+        const noteStart = noteDelay ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
+        const noteEnd = noteStart + endTickMark;
+        MIDI_ON_Stack.push({
+            tickMark: noteStart,
+            note: note,
         });
+        MIDI_OFF_Stack.push({
+            tickMark: noteEnd,
+            note: note,
+        });
+        previousNoteMarks = {
+            start: noteStart,
+            end: noteEnd,
+        }
+        // console.log(endTickMark)
+        // console.log('----')
     });
     console.log('----')
     MIDI_ON_Stack.sort((a, b) => b.tickMark - a.tickMark);
@@ -226,25 +224,26 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
     }
 }
 
-export function generateJavaScript(music: Music, filePath: string, destination: string | undefined): string {
+export function generateJavaScript(model: QuoicouBeats, filePath: string, destination: string | undefined): string {
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.mid`;
 
-    const numerator = parseInt(music.numerator);
-    const denominator = parseInt(music.denominator);
+    const numerator = parseInt(model.music.numerator);
+    const denominator = parseInt(model.music.denominator);
+    console.log(`numerator: ${numerator} denominator: ${denominator}`)
     let midiTracks: MidiWriter.Track[] = [];
     // let silence : number = 0;
     // let channel : number = 1;
-    music.tracks.forEach(track => {
+    model.music.tracks.forEach((track: Track) => {
         const trackMidi = new MidiWriter.Track();
         const instrumentNumber = Object.entries(instruments).find(([key, _]) => key === track.instrument.instrument)?.[1] ?? 0;
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
         trackMidi.addInstrumentName(track.name);
-        trackMidi.setTempo(parseInt(music.tempo));
+        trackMidi.setTempo(parseInt(model.music.tempo));
 
-        fillStacks(music);
-        generateMidiEvents(trackMidi, parseInt(music.tickCount));
+        fillStacks(track, parseInt(model.music.tickCount));
+        generateMidiEvents(trackMidi, parseInt(model.music.tickCount));
 
         // const notes = track.notesOrPatterns.flatMap(noteOrPattern => {
         //     if (isNote(noteOrPattern)) {
