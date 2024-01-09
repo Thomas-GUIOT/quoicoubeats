@@ -22,40 +22,40 @@ function noteToPitch(note: any): string {
     switch (note.note) {
         case 'Do':
         case 'C':
-            return (60 + octave * 12).toString();
+            return (octave * 12).toString();
         case 'Do#':
         case 'C#':
-            return (61 + octave * 12).toString();
+            return (1 + octave * 12).toString();
         case 'Re':
         case 'D':
-            return (62 + octave * 12).toString();
+            return (2 + octave * 12).toString();
         case 'Re#':
         case 'D#':
-            return (63 + octave * 12).toString();
+            return (3 + octave * 12).toString();
         case 'Mi':
         case 'E':
-            return (64 + octave * 12).toString();
+            return (4 + octave * 12).toString();
         case 'Fa':
         case 'F':
-            return (65 + octave * 12).toString();
+            return (5 + octave * 12).toString();
         case 'Fa#':
         case 'F#':
-            return (66 + octave * 12).toString();
+            return (6 + octave * 12).toString();
         case 'Sol':
         case 'G':
-            return (67 + octave * 12).toString();
+            return (7 + octave * 12).toString();
         case 'Sol#':
         case 'G#':
-            return (68 + octave * 12).toString();
+            return (8 + octave * 12).toString();
         case 'La':
         case 'A':
-            return (69 + octave * 12).toString();
+            return (9 + octave * 12).toString();
         case 'La#':
         case 'A#':
-            return (70 + octave * 12).toString();
+            return (10 + octave * 12).toString();
         case 'Si':
         case 'B':
-            return (71 + octave * 12).toString();
+            return (11 + octave * 12).toString();
         default:
             throw new Error(`Note inconnue: ${note.note}`);
     }
@@ -125,7 +125,7 @@ function fillStacks(music: Music) {
             const endTickMark = noteTypeToTicks(note.noteType, parseInt(music.tickCount));
             const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,parseInt(music.tickCount)), 0);
             const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,parseInt(music.tickCount)), 0);
-            console.log(`noteDelay: ${noteDelay}`)
+            // console.log(`noteDelay: ${noteDelay}`)
             const noteStart = noteDelay ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
             const noteEnd = noteStart + endTickMark;
             MIDI_ON_Stack.push({
@@ -140,8 +140,8 @@ function fillStacks(music: Music) {
                 start: noteStart,
                 end: noteEnd > previousNoteMarks.end ? noteEnd : previousNoteMarks.end,
             }
-            console.log(endTickMark)
-            console.log('----')
+            // console.log(endTickMark)
+            // console.log('----')
         });
     });
     console.log('----')
@@ -161,19 +161,21 @@ function addOnEvent(track: MidiWriter.Track, note: any, ticks: number) {
         velocity: 100,
     };
     const delay = note.delay.flatMap((delay: string) => delay).reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
-    if (note.delay) noteOptions.wait = `t${delay}`;
-    console.log(`ON note: ${note.note} wait: ${noteOptions.wait}`)
+    if (delay > 0) noteOptions.wait = `t${delay}`;
+    console.log(`> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`);
     track.addEvent(new MidiWriter.NoteOnEvent(noteOptions));
 }
 
 function addOffEvent(track: MidiWriter.Track, note: any, ticks: number, delta: number | undefined = undefined) {
+    // const delayValue = note.delay.flatMap((delay: string) => delay).reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
+    const duration = delta ? 0 : noteTypeToTicks(note.noteType, ticks);
+    console.log(`delta: ${delta}`)
     const noteOptions: any = {
         pitch: [noteToPitch(note)],
-        duration: delta ? 0 : noteTypeToTicks(note.noteType, ticks)-noteTypeToTicks(note.delay, ticks),
+        duration: `t${duration}`,
     };
     if (delta) noteOptions.delta = delta;
-    // console.log(`noteTypeToTicks: ${noteTypeToTicks(note.noteType, ticks)}`)
-    console.log(`OFF note: ${note.note} delta: ${delta}:${noteOptions.delta} duration: ${delta ? 0 : noteTypeToTicks(note.noteType, ticks)-noteTypeToTicks(note.delay, ticks)}`)
+    console.log(`> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`);
     track.addEvent(new MidiWriter.NoteOffEvent(noteOptions));
 }
 
@@ -191,12 +193,20 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
         let off = MIDI_OFF_Stack[MIDI_OFF_Stack.length - 1];
         // console.log('INSPECT: ', util.inspect(on))
         // console.log(`on: ${JSON.stringify(on?.tickMark)} off: ${JSON.stringify(off?.tickMark)}`)
-        if (on?.tickMark <= off?.tickMark) {
+        console.log(`on: ${on?.tickMark} off: ${off?.tickMark}`)
+        if (on?.tickMark < off?.tickMark) {
+            console.log('on < off')
             note = MIDI_ON_Stack.pop()?.note;
             // console.log(`on: ${JSON.stringify(note.note) + note.noteType}`)
             addOnEvent(trackMidi, note, ticks);
             previousEvents.on = on;
-        } else {
+        } else if (on?.tickMark === off?.tickMark) {
+            console.log('equal')
+            note = MIDI_OFF_Stack.pop()?.note;
+            addOffEvent(trackMidi, note, ticks);
+            previousEvents.off = off;
+        } else if (off) {
+            console.log('on > off')
             note = MIDI_OFF_Stack.pop();
             if (!note) break;
             // console.log(`off: ${JSON.stringify(note.note) + note.noteType}`)

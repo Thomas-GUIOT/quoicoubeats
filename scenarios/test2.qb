@@ -8,9 +8,9 @@ Music "Tchoin" {
             Instrument 1
             Notes {
                 Do 4 ronde
-                Re 4 noire (noire)
+                Re 4 noire
                 Mi 4 ronde
-                Fa 4 ronde (noire)
+                Fa 4 ronde
             }
         }
     }
