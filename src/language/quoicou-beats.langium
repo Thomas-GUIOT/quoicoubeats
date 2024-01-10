@@ -63,7 +63,7 @@ Instrument:
 
 terminal DRUMNOTE: /kd|sd|ch/;
 terminal INT: /[0-9]+/;
-terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche/;
+terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche|accord/;
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
 terminal STRING: /"([^"\\]|\\.)*"/;
