@@ -121,13 +121,12 @@ function fillStacks(track: Track, tickCount: number) {
         start: 0,
         end: 0,
     }
+
     track.notes.forEach(note => {
-        // console.log(`note: ${note.note} ${note.noteType}`)
-        const endTickMark = noteTypeToTicks(note.noteType || 'ronde', tickCount);
-        const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
-        const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
-        // console.log(`noteDelay: ${noteDelay}`)
-        const noteStart = noteDelay ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
+        const endTickMark = noteTypeToTicks(note.noteType ?? 'ronde', tickCount);
+        const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
+        const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
+        const noteStart = note.delay.length ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
         const noteEnd = noteStart + endTickMark;
         // console.log(`note: ${note.note} noteDelay: ${noteDelay} notePause: ${notePause} noteStart: ${noteStart} noteEnd: ${noteEnd}`)
         MIDI_ON_Stack.push({
@@ -142,8 +141,6 @@ function fillStacks(track: Track, tickCount: number) {
             start: noteStart,
             end: noteEnd,
         }
-        // console.log(endTickMark)
-        // console.log('----')
     });
     MIDI_ON_Stack.sort((a, b) => {
         if (a.tickMark === b.tickMark) {

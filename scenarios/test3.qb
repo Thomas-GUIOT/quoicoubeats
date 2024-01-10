@@ -5,7 +5,7 @@ Music "Chord" {
 
     Tracks {
         Track "Piano" {
-            Instrument 1
+            Instrument "Piano"
             Notes {
                 Do 4 ronde
                 Re 4 noire (accord)
