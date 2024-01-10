@@ -13,7 +13,9 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
         Music: [validator.checkTicksIsUnder128.bind(validator),
                 validator.checkDenominatorIsCorrect.bind(validator),
                 validator.checkNumeratorIsCorrect.bind(validator),
-                validator.checkIsValidInstrumentMusic.bind(validator)],
+                validator.checkIsValidInstrumentMusic.bind(validator),
+                validator.checkDefaultOctaveIsCorrectOrNecessary.bind(validator),
+                validator.checkDefaultNoteTypeIsCorrectOrNecessary.bind(validator)],
         Keyboard: [validator.checkIsValidInstrumentKeyboard.bind(validator),
                    validator.checkKeyboardIsNotAlreadyUsed.bind(validator)]
     };
@@ -51,6 +53,39 @@ export class QuoicouBeatsValidator {
         const numerator = parseInt(music.numerator);
         if (!(Number.isInteger(numerator) && numerator > 0 && [1, 2, 4, 8, 16].includes(numerator))) {
             accept('error', 'The numerator must be 1, 2, 4, 8 or 16.', { node: music, property: 'numerator' });
+        }
+    }
+
+    checkDefaultOctaveIsCorrectOrNecessary(music: Music, accept: ValidationAcceptor): void {
+        if (music.defaultOctave === undefined || music.defaultOctave === '') {
+            // Check if an octave is undefined and if so, throw an error
+            music.tracks.forEach(track => {
+                track.notes.forEach(note => {
+                    if (note.octave === undefined || note.octave === '') {
+                        accept('error', 'Presence of octave not defined, the default octave must be defined.', { node: music, property: 'defaultOctave' });
+                    }
+                });
+            });
+        }
+        else {
+            // Check if the default octave is an integer
+            const defaultOctave = parseInt(music.defaultOctave);
+            if (!(Number.isInteger(defaultOctave))) {
+                accept('error', 'The default octave must be an integer.', { node: music, property: 'defaultOctave' });
+            }
+        }
+    }
+
+    checkDefaultNoteTypeIsCorrectOrNecessary(music: Music, accept: ValidationAcceptor): void {
+        if (music.defaultNoteType === undefined || music.defaultNoteType === '') {
+            // Check if an octave is undefined and if so, throw an error
+            music.tracks.forEach(track => {
+                track.notes.forEach(note => {
+                    if (note.noteType === undefined || note.noteType === '') {
+                        accept('error', 'Presence of note type not defined, the default note type must be defined.', { node: music, property: 'defaultNoteType' });
+                    }
+                });
+            });
         }
     }
 

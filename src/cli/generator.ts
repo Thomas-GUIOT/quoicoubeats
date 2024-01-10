@@ -1,8 +1,9 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {QuoicouBeats, Track} from "../language/generated/ast.js";
+import {QuoicouBeats, Track, Note} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
+
 import instruments from "../instruments.json" assert { type: 'json' };
 
 const MIDI_ON_Stack: StackNote[] = [];
@@ -121,7 +122,7 @@ function fillStacks(track: Track, tickCount: number) {
     }
     track.notes.forEach(note => {
         // console.log(`note: ${note.note} ${note.noteType}`)
-        const endTickMark = noteTypeToTicks(note.noteType, tickCount);
+        const endTickMark = noteTypeToTicks(note.noteType || 'ronde', tickCount);
         const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
         const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
         // console.log(`noteDelay: ${noteDelay}`)
@@ -226,6 +227,15 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
     }
 }
 
+function replaceDefaultValue(defaultOctave: string, defaultNoteType: string, note: Note) {
+    if (note.octave === undefined || note.octave === '') {
+        note.octave = defaultOctave;
+    }
+    if (note.noteType === undefined || note.noteType === '') {
+        note.noteType = defaultNoteType;
+    }
+}
+
 export function generateJavaScript(model: QuoicouBeats, filePath: string, destination: string | undefined): string {
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.mid`;
@@ -233,6 +243,14 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
     const numerator = parseInt(model.music.numerator);
     const denominator = parseInt(model.music.denominator);
     console.log(`numerator: ${numerator} denominator: ${denominator}`)
+
+    const tickCount = parseInt(model.music.tickCount);
+
+    // If default values are needed, their presence is checked in the validator
+    // The other value is only used to ensure that the value is not null
+    const defaultOctave = model.music.defaultOctave || '5';
+    const defaultNoteType = model.music.defaultNoteType || 'noire';
+
     let midiTracks: MidiWriter.Track[] = [];
     // let silence : number = 0;
     // let channel : number = 1;
@@ -244,8 +262,12 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(parseInt(model.music.tempo));
 
-        fillStacks(track, parseInt(model.music.tickCount));
-        generateMidiEvents(trackMidi, parseInt(model.music.tickCount));
+        track.notes.forEach(note => {
+            replaceDefaultValue(defaultOctave, defaultNoteType, note);
+        });
+
+        fillStacks(track, tickCount);
+        generateMidiEvents(trackMidi, tickCount);
 
         // const notes = track.notesOrPatterns.flatMap(noteOrPattern => {
         //     if (isNote(noteOrPattern)) {

@@ -9,6 +9,8 @@ Music:
         'Tempo' tempo=INT
         'Time' 'Signature' numerator=INT '/' denominator=INT
         'Ticks' tickCount=INT
+        ('DefaultOctave' defaultOctave=INT)?
+        ('DefaultNoteType' defaultNoteType=NoteType)?
         (patterns+=PatternDeclaration)*
         'Tracks' '{'
             (tracks+=Track)+
@@ -51,7 +53,10 @@ PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
 
 Note:
-    note=NOTE octave=INT noteType=NoteType ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
+    note=NOTE
+    (octave=INT)?
+    (noteType=NoteType)?
+    ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
 
 Instrument:
     'Instrument' instrument=STRING;
