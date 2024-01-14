@@ -5,6 +5,7 @@ import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
 import instruments from "../instruments.json" assert { type: 'json' };
+import keyboard_instruments from "../keyboard_instruments.json" assert { type: 'json' };
 
 const MIDI_ON_Stack: StackNote[] = [];
 const MIDI_OFF_Stack: StackNote[] = [];
@@ -242,6 +243,49 @@ function replaceDefaultValue(defaultOctave: string, defaultNoteType: string, not
     if (note.noteType === undefined || note.noteType === '') {
         note.noteType = defaultNoteType;
     }
+}
+
+export function generateKeyboardProgram(model: QuoicouBeats, filePath: string, destination: string | undefined, audioPath: string): string | null {
+    if(!model.keyboard) {
+        return null;
+    }
+
+    const data = extractDestinationAndName(filePath, destination);
+    const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
+
+    const keyboardBindingConfig = model.keyboard?.bindingConf;
+    const instrumentName = keyboardBindingConfig?.instrument.instrument;
+    const instrumentNumber = Object.entries(keyboard_instruments).find(([key, _]) => key === instrumentName)?.[1] ?? 0;
+
+    const notesFolder = path.join('assets', 'instruments', instrumentNumber.toString())
+    
+    let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title></head><body>`
+
+    keyboardBindingConfig?.bindings.forEach(binding => {
+        const keyToLowerCase = binding.key.toLowerCase();
+        const note = binding.note;
+        const notePath = path.join(notesFolder, note + '.mp3');
+
+        htmlWriter += `<p>${keyToLowerCase}: ${note}</div><audio src="${notePath}" id="${keyToLowerCase}"></audio>`
+    });
+
+    htmlWriter += `<script>
+    document.addEventListener('keydown', e => {
+        if (e.repeat) return
+        playNote(e.key);
+    })
+
+    let playNote = (key) => {
+        const noteSound = document.getElementById(key)
+        if(!noteSound) return;
+        noteSound.currentTime = 0
+        noteSound.play()
+    }
+</script></body></html>`
+
+    fs.writeFileSync(generatedFilePath, htmlWriter, 'utf-8');
+
+    return generatedFilePath;
 }
 
 export function generateJavaScript(model: QuoicouBeats, filePath: string, destination: string | undefined): string {

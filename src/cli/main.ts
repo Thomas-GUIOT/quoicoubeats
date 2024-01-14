@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import { QuoicouBeatsLanguageMetaData } from '../language/generated/module.js';
 import { createQuoicouBeatsServices } from '../language/quoicou-beats-module.js';
 import { extractAstNode } from './cli-util.js';
-import { generateJavaScript } from './generator.js';
+import { generateJavaScript, generateKeyboardProgram } from './generator.js';
 import { NodeFileSystem } from 'langium/node';
 import * as url from 'node:url';
 import * as fs from 'node:fs/promises';
@@ -19,6 +19,9 @@ export const generateAction = async (fileName: string, opts: GenerateOptions): P
     const model = await extractAstNode<QuoicouBeats>(fileName, services);
     const generatedFilePath = generateJavaScript(model, fileName, opts.destination);
     console.log(chalk.green(`JavaScript code generated successfully: ${generatedFilePath}`));
+    
+    const keyboardPlayGeneratedFilePath = generateKeyboardProgram(model, fileName, opts.destination, generatedFilePath);
+    if(keyboardPlayGeneratedFilePath) console.log(chalk.green(`Keyboard program generated successfully: ${keyboardPlayGeneratedFilePath}`));
 };
 
 export type GenerateOptions = {

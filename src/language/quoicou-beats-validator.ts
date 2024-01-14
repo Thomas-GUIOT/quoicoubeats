@@ -2,6 +2,7 @@ import type { ValidationAcceptor, ValidationChecks } from 'langium';
 import {Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
 import type { QuoicouBeatsServices } from './quoicou-beats-module.js';
 import instruments from '../instruments.json' assert { type: 'json' };
+import keyboard_instrument from '../keyboard_instruments.json' assert { type: 'json' };
 
 /**
  * Register custom validation checks.
@@ -93,7 +94,7 @@ export class QuoicouBeatsValidator {
 
     checkIsValidInstrumentKeyboard(keyboard: Keyboard, accept: ValidationAcceptor): void {
         const instrument = keyboard.bindingConf.instrument.instrument;
-        if (!Object.keys(instruments).includes(instrument))
+        if (!Object.keys(keyboard_instrument).includes(instrument))
                 accept('error', `Instrument ${instrument} is not supported.`, { node: keyboard.bindingConf, property: 'instrument' });
     }
 
@@ -103,7 +104,9 @@ export class QuoicouBeatsValidator {
         const alreadyDefinedNote: String[] = [];
         for(const binding of bindings) {
             // Si ce n'est pas en majuscule, erreur
-            if(!binding.key) accept('error', `The key is not recognized. Must be [A-Z] in uppercase, or 'Space'.`, { node: binding })
+            if(!binding.key) accept('error', `The key is not recognized. Must be any character (not space).`, { node: binding })
+
+            binding.key = binding.key.toUpperCase();
 
             if(alreadyDefinedKey.includes(binding.key)) accept('error', `The key ${binding.key} is already used.`, { node: binding })
             if(alreadyDefinedNote.includes(binding.note)) accept('error', `The note ${binding.note} is already used.`, { node: binding })
