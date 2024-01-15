@@ -2,7 +2,16 @@ import type { ValidationAcceptor, ValidationChecks } from "langium";
 import type { QuoicouBeatsServices } from "./quoicou-beats-module.js";
 import instruments from "../instruments.json" assert { type: "json" };
 import keyboard_instrument from "../keyboard_instruments.json" assert { type: "json" };
-import {isClassicNote, Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
+import {
+    ClassicNote,
+    isClassicNote,
+    isDrumNote, isPatternReference,
+    Keyboard,
+    Music,
+    PatternDeclaration,
+    QuoicouBeatsAstType,
+    Track
+} from './generated/ast.js';
 
 /**
  * Register custom validation checks.
@@ -12,7 +21,8 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
     const validator = services.validation.QuoicouBeatsValidator;
     const checks: ValidationChecks<QuoicouBeatsAstType> = {
         Music: [
-            validator.checkTicksIsUnder128.bind(validator),
+            validator.checkTempoIsCorrect.bind(validator),
+            validator.checkTicksCountIsCorrect.bind(validator),
             validator.checkDenominatorIsCorrect.bind(validator),
             validator.checkNumeratorIsCorrect.bind(validator),
             validator.checkIsValidInstrumentMusic.bind(validator),
@@ -23,6 +33,15 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
             validator.checkIsValidInstrumentKeyboard.bind(validator),
             validator.checkKeyboardIsNotAlreadyUsed.bind(validator),
         ],
+        PatternDeclaration: [
+            validator.checkPatternIsCorrect.bind(validator),
+        ],
+        Track: [
+            validator.checkTrackNotesAreCorrect.bind(validator),
+        ],
+        ClassicNote: [
+            validator.checkOctaveIsCorrect.bind(validator),
+        ],
     };
     registry.register(checks, validator);
 }
@@ -31,11 +50,26 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
  * Implementation of custom validations.
  */
 export class QuoicouBeatsValidator {
-    // Validators for Music
 
-    checkTicksIsUnder128(music: Music, accept: ValidationAcceptor): void {
-        if (parseInt(music.tickCount) > 128) {
+    checkTempoIsCorrect(music: Music, accept: ValidationAcceptor): void {
+        const tempo = music.tempo;
+        if (tempo <= 0) {
+            accept("error", "The tempo cannot be lower or equal to 0.", {
+                node: music,
+                property: "tempo",
+            });
+        }
+    }
+
+    // Validators for Music
+    checkTicksCountIsCorrect(music: Music, accept: ValidationAcceptor): void {
+        if (music.tickCount > 128) {
             accept("error", "Song definition cannot be higher than 128.", {
+                node: music,
+                property: "tickCount",
+            });
+        } else if (music.tickCount <= 0) {
+            accept("error", "Song definition cannot be lower or equal to 0.", {
                 node: music,
                 property: "tickCount",
             });
@@ -54,7 +88,7 @@ export class QuoicouBeatsValidator {
     }
 
     checkDenominatorIsCorrect(music: Music, accept: ValidationAcceptor): void {
-        const denominator = parseInt(music.denominator);
+        const denominator = music.denominator;
         if (
             !(Number.isInteger(denominator) && denominator > 0 && denominator <= 12)
         ) {
@@ -66,7 +100,7 @@ export class QuoicouBeatsValidator {
     }
 
     checkNumeratorIsCorrect(music: Music, accept: ValidationAcceptor): void {
-        const numerator = parseInt(music.numerator);
+        const numerator = music.numerator;
         if (
             !(
                 Number.isInteger(numerator) &&
@@ -81,25 +115,74 @@ export class QuoicouBeatsValidator {
         }
     }
 
+    // Check if pattern is correct (drum and classic note cannot be mixed)
+    checkPatternIsCorrect(pattern: PatternDeclaration, accept: ValidationAcceptor): void {
+        const isDrumNotes = isDrumNote(pattern.notes[0]);
+        pattern.notes.forEach(note => {
+            if (isDrumNotes != isDrumNote(note)) {
+                accept('error', `The pattern ${pattern.name} contains both drum notes and classic notes, it is not allowed.`, {
+                    node: pattern,
+                    property: 'notes'
+                });
+            }
+        });
+    }
+
+    // Check if track notes are correct (drum and classic notes cannot be mixed)
+    checkTrackNotesAreCorrect(track: Track, accept: ValidationAcceptor): void {
+        const isDrum = track.instrument.instrument === 'Drums';
+        track.notes.forEach(patternOrNote => {
+            if (isPatternReference(patternOrNote)) {
+                if (patternOrNote.repeatCount !== undefined && patternOrNote.repeatCount <= 0) {
+                    accept('error', `The track ${track.name} contains a pattern reference with a repeat count <= of 0, it is not allowed.`, {
+                        node: track,
+                        property: 'notes'
+                    });
+                }
+                if (isDrum != isDrumNote(patternOrNote.pattern.ref?.notes[0])) {
+                    accept('error', `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`, {
+                        node: track,
+                        property: 'notes'
+                    });
+                }
+            } else if (isDrum != isDrumNote(patternOrNote)) {
+                accept('error', `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`, {
+                    node: track,
+                    property: 'notes'
+                });
+            }
+        });
+    }
+
     checkDefaultOctaveIsCorrectOrNecessary(music: Music, accept: ValidationAcceptor): void {
-        if (music.defaultOctave === undefined || music.defaultOctave === '') {
+        if (music.defaultOctave === undefined) {
             // Check if an octave is undefined and if so, throw an error
             music.tracks.forEach(track => {
                 track.notes.filter((note) => isClassicNote(note)).forEach(note => {
-                    if (isClassicNote(note)) {
-                        if (note.octave === undefined || note.octave === '') {
-                            accept('error', 'Presence of octave not defined, the default octave must be defined.', { node: music, property: 'defaultOctave' });
-                        }
+                    if (isClassicNote(note) && note.octave === undefined) {
+                        accept('error', `Presence of undefined octave in a Note inside the track ${track.name}, the default octave must be defined.`, {
+                            node: music,
+                            property: 'defaultOctave'
+                        });
+                    }
+                });
+            });
+            music.patterns.forEach(pattern => {
+                pattern.notes.forEach(note => {
+                    if (isClassicNote(note) && note.octave === undefined) {
+                        accept('error', `Presence of undefined octave in a Note inside the pattern ${pattern.name}, the default octave must be defined.`, {
+                            node: music,
+                            property: 'defaultOctave'
+                        });
                     }
                 });
             });
         }
-        else {
-            // Check if the default octave is an integer
-            const defaultOctave = parseInt(music.defaultOctave);
-            if (!(Number.isInteger(defaultOctave))) {
-                accept('error', 'The default octave must be an integer.', { node: music, property: 'defaultOctave' });
-            }
+        else if (music.defaultOctave < -1 || music.defaultOctave > 9) {
+            accept('error', `The default octave must be between -1 and 9.`, {
+                node: music,
+                property: 'defaultOctave'
+            });
         }
     }
 
@@ -107,19 +190,39 @@ export class QuoicouBeatsValidator {
         if (music.defaultNoteType === undefined || music.defaultNoteType === '') {
             // Check if an octave is undefined and if so, throw an error
             music.tracks.forEach(track => {
-                track.notes.filter(note => isClassicNote(note)).forEach(note => {
-                    if (isClassicNote(note)) {
-                        if (note.noteType === undefined || note.noteType === '') {
-                            accept('error', 'Presence of note type not defined, the default note type must be defined.', { node: music, property: 'defaultNoteType' });
-                        }
+                track.notes.forEach(note => {
+                    if (isClassicNote(note) && (note.noteType === undefined || note.noteType === '')) {
+                        accept('error', `Presence of an undefined note type in a Note inside the track ${track.name}, the default note type must be defined!`, {
+                            node: music,
+                            property: 'defaultNoteType'
+                        });
+                    }
+                });
+            });
+            music.patterns.forEach(pattern => {
+                pattern.notes.forEach(note => {
+                    if (isClassicNote(note) && (note.noteType === undefined || note.noteType === '')) {
+                        accept('error', `Presence of an undefined note type in a Note inside the pattern ${pattern.name}, the default note type must be defined!`, {
+                            node: music,
+                            property: 'defaultNoteType'
+                        });
                     }
                 });
             });
         }
     }
 
-    // Validators for Keyboard
+    checkOctaveIsCorrect(note: ClassicNote, accept: ValidationAcceptor): void {
+        if (note.octave !== undefined && (note.octave < -1 || note.octave > 9)) {
+            accept('error', `The octave must be between -1 and 9.`, {
+                node: note,
+                property: 'octave'
+            });
+        }
+    }
 
+
+    // Validators for Keyboard
     checkIsValidInstrumentKeyboard(
         keyboard: Keyboard,
         accept: ValidationAcceptor

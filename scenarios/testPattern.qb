@@ -1,0 +1,24 @@
+Music "Tchoin" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 4
+    DefaultOctave 5
+
+    Patterns {
+        "test" {
+            Do ronde
+            Re noire (noire)
+            Mi ronde
+            Fa ronde (noire)
+        }
+    }
+
+    Tracks {
+        Track "Piano" {
+            Instrument "Piano"
+            Notes {
+                pattern "test" x 5
+            }
+        }
+    }
+}

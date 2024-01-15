@@ -11,7 +11,9 @@ Music:
         'Ticks' tickCount=INT
         ('DefaultOctave' defaultOctave=INT)?
         ('DefaultNoteType' defaultNoteType=NoteType)?
-        (patterns+=PatternDeclaration)*
+        ('Patterns' '{'
+            (patterns+=PatternDeclaration)+
+        '}')?
         'Tracks' '{'
             (tracks+=Track)+
         '}'
@@ -31,8 +33,8 @@ Binding:
     'Key' key=KeyboardKey '->' note=NOTE;
     
 PatternDeclaration:
-    'declare' name=STRING '{'
-        (notes+=DrumNote|ClassicNote)+
+    name=STRING '{'
+        (notes+=(DrumNote|ClassicNote))+
     '}';
 
 Track:
@@ -66,7 +68,7 @@ Instrument:
     'Instrument' instrument=STRING;
 
 terminal DRUMNOTE: /kd|sd|ch/;
-terminal INT: /[0-9]+/;
+terminal INT returns number: /(\-1|[0-9]+)/;
 terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche|accord/;
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;

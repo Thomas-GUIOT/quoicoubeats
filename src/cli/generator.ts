@@ -1,6 +1,14 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {QuoicouBeats, Track, ClassicNote, isClassicNote, DrumNote, isDrumNote} from "../language/generated/ast.js";
+import {
+    QuoicouBeats,
+    Track,
+    ClassicNote,
+    isClassicNote,
+    DrumNote,
+    isDrumNote,
+    isPatternReference
+} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
@@ -20,7 +28,7 @@ type StackNote = {
  * @param note
  */
 function noteToPitch(note: any): string {
-    const octave = parseInt(note.octave);
+    const octave = note.octave + 1;
     switch (note.note) {
         case "Do":
         case "C":
@@ -267,8 +275,8 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
     }
 }
 
-function replaceDefaultValue(defaultOctave: string, defaultNoteType: string, note: ClassicNote) {
-    if (note.octave === undefined || note.octave === '') {
+function replaceDefaultValue(defaultOctave: number, defaultNoteType: string, note: ClassicNote) {
+    if (note.octave === undefined) {
         note.octave = defaultOctave;
     }
     if (note.noteType === undefined || note.noteType === '') {
@@ -288,7 +296,7 @@ export function generateKeyboardProgram(
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
 
-    const tickCount = parseInt(model.music.tickCount);
+  const tickCount = model.music.tickCount;
 
     const midiAudioPath = path.join("..", audioPath);
     const keyboardBindingConfig = model.keyboard?.bindingConf;
@@ -366,16 +374,24 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.mid`;
 
-    const numerator = parseInt(model.music.numerator);
-    const denominator = parseInt(model.music.denominator);
-    console.log(`numerator: ${numerator} denominator: ${denominator}`)
+    const numerator = model.music.numerator;
+    const denominator = model.music.denominator;
+    console.log(`numerator: ${numerator} denominator: ${denominator}`);
 
-    const tickCount = parseInt(model.music.tickCount);
+    const tickCount = model.music.tickCount;
 
     // If default values are needed, their presence is checked in the validator
     // The other value is only used to ensure that the value is not null
-    const defaultOctave = model.music.defaultOctave || '5';
+    const defaultOctave = model.music.defaultOctave || 5;
     const defaultNoteType = model.music.defaultNoteType || 'noire';
+
+    model.music.patterns.forEach(pattern => {
+        pattern.notes.forEach(note => {
+            if (isClassicNote(note)) {
+                replaceDefaultValue(defaultOctave, defaultNoteType, note);
+            }
+        });
+    });
 
     let midiTracks: MidiWriter.Track[] = [];
     // let silence : number = 0;
@@ -386,19 +402,32 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
         trackMidi.addInstrumentName(track.name);
-        trackMidi.setTempo(parseInt(model.music.tempo));
+        trackMidi.setTempo(model.music.tempo);
 
         if (track.instrument.instrument === 'Drums') {
             // Drums
             let drumNotes = track.notes.filter(note => isDrumNote(note)) as DrumNote[];
             generateDrumsEvents(trackMidi, drumNotes, tickCount);
         } else {
-            // Other instruments
+            // Other instruments with classical notes (ensured by the validator)
             let notes: ClassicNote[] = [];
-            track.notes.forEach(note => {
-                if (isClassicNote(note)) {
-                    replaceDefaultValue(defaultOctave, defaultNoteType, note);
-                    notes.push(note);
+            track.notes.forEach(patternOrNote => {
+                if (isClassicNote(patternOrNote)) {
+                    replaceDefaultValue(defaultOctave, defaultNoteType, patternOrNote);
+                    notes.push(patternOrNote);
+                } else if (isPatternReference(patternOrNote)) {
+                    // On repète le pattern autant de fois que demandé
+                    const repeatCount = patternOrNote.repeatCount
+                      ? patternOrNote.repeatCount
+                      : 1;
+                    for (let i = 0; i < repeatCount; i++) {
+                        patternOrNote.pattern.ref?.notes.forEach((note) => {
+                            // Check for compilation but this should never happen thanks to the validator
+                            if (isClassicNote(note)) {
+                                notes.push(note);
+                            }
+                        });
+                    }
                 }
             });
 
