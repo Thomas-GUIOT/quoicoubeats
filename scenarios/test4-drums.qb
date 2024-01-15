@@ -1,5 +1,5 @@
 Music "Chord" {
-    Tempo 180
+    Tempo 117
     TimeSignature 4/4
     Ticks 128
 
@@ -10,12 +10,132 @@ Music "Chord" {
                 kd
                 ch (accord)
 
-                ch [croche doubleCroche]
+                ch [noire]
 
-                sd [croche doubleCroche]
+                sd [noire]
                 ch (accord)
 
-                ch [croche doubleCroche]
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                kd [noire]
+                ch (accord)
+
+                ch [noire]
+
+                sd [noire]
+                ch (accord)
+
+                ch [noire]
             }
         }
     }

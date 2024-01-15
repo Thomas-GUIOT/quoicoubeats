@@ -90,6 +90,7 @@ function noteTypeToTicks(noteType: string, ticks: number): number {
         doubleCroche: 0.25 * ticks,
         tripleCroche: 0.125 * ticks,
         quadrupleCroche: 0.0625 * ticks,
+        drum: 1,
         accord: 0,
     };
     if (noteTypeToTicks[noteType] !== undefined) return noteTypeToTicks[noteType];
@@ -104,15 +105,14 @@ function fillStacks(notes: ClassicNote[]|DrumNote[], tickCount: number) {
 
     notes.forEach(note => {
         let noteType;
-        if (isDrumNote(note)) noteType = 'doubleCroche';
+        if (isDrumNote(note)) noteType = 'drum';
         else noteType = note.noteType;
         const endTickMark = noteTypeToTicks(noteType ?? 'ronde', tickCount);
-        console.log(`noteDelay: ${note.delay} notePause: ${note.pause} noteStart: ${previousNoteMarks.start} noteEnd: ${previousNoteMarks.end}`)
         const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
         const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
-        console.log('PAUSE: ', note.pause)
         const noteStart = note.delay.length ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
         const noteEnd = noteStart + endTickMark;
+        console.log(`noteDelay: ${noteDelay} notePause: ${notePause} noteStart: ${noteStart} noteEnd: ${noteEnd}`)
         // console.log(`note: ${note.note} noteDelay: ${noteDelay} notePause: ${notePause} noteStart: ${noteStart} noteEnd: ${noteEnd}`)
         MIDI_ON_Stack.push({
             tickMark: noteStart,
@@ -153,33 +153,50 @@ function fillStacks(notes: ClassicNote[]|DrumNote[], tickCount: number) {
     console.log("------------------");
 }
 
-function addOnEvent(track: MidiWriter.Track, note: ClassicNote|DrumNote, ticks: number) {
+function addOnEvent(track: MidiWriter.Track, note: ClassicNote, ticks: number) {
     const noteOptions: any = {
-        pitch: [isClassicNote(note) ? noteToPitch(note) : getDrumInstrument(note.element)],
+        pitch: [noteToPitch(note)],
         velocity: 100,
     };
     const delay = note.delay
         .flatMap((delay: string) => delay)
         .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
     if (delay > 0) noteOptions.wait = `t${delay}`;
-    if (isClassicNote(note)) {
-        console.log(
-            `> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`
-        );
-    } else {
-        console.log(
-            `> ON note: ${note.element} options: ${JSON.stringify(noteOptions)}`
-        );
-    }
+    console.log(
+        `> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`
+    );
     track.addEvent(new MidiWriter.NoteOnEvent({
         ...noteOptions,
         channel: isClassicNote(note) ? 1 : 10,
     }));
 }
 
+function addDrumEvent(track: MidiWriter.Track, note: DrumNote, ticks: number) {
+    const noteOptions: any = {
+        pitch: [getDrumInstrument(note.element)],
+        velocity: 100,
+        duration: `t1`,
+        channel: 10,
+    };
+    let delay = note.delay
+        .flatMap((delay: string) => delay)
+        .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
+    const pause = note.pause
+        .flatMap((pause: string) => pause)
+        .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
+    delay += pause;
+    if (delay >= 0) noteOptions.wait = `t${delay}`;
+    console.log(
+        `> DRUM : ${note.element} options: ${JSON.stringify(noteOptions)}`
+    );
+    track.addEvent(new MidiWriter.NoteEvent({
+        ...noteOptions,
+    }));
+}
+
 function addOffEvent(
     track: MidiWriter.Track,
-    note: ClassicNote|DrumNote,
+    note: ClassicNote,
     ticks: number,
     delta: number | undefined = undefined
 ) {
@@ -191,23 +208,17 @@ function addOffEvent(
         ? 0
         : isAccord
             ? 0
-            : (isClassicNote(note) ? noteTypeToTicks(note.noteType!, ticks) : noteTypeToTicks('doubleCroche', ticks));
+            :noteTypeToTicks(note.noteType!, ticks);
     // console.log(`duration: ${duration}`)
     // console.log(`delta: ${delta}`)
     const noteOptions: any = {
-        pitch: [isClassicNote(note) ? noteToPitch(note) : getDrumInstrument(note.element)],
+        pitch: [noteToPitch(note)],
         duration: `t${duration}`,
     };
     if (delta) noteOptions.delta = delta;
-    if (isClassicNote(note)) {
-        console.log(
-            `> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`
-        );
-    } else {
-        console.log(
-            `> OFF note: ${note.element} options: ${JSON.stringify(noteOptions)}`
-        );
-    }
+    console.log(
+        `> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`
+    );
     track.addEvent(new MidiWriter.NoteOffEvent({
         ...noteOptions,
         channel: isClassicNote(note) ? 1 : 10,
@@ -271,22 +282,22 @@ export function generateKeyboardProgram(
     destination: string | undefined,
     audioPath: string
 ): string | null {
-  if (!model.keyboard) {
-    return null;
-  }
-  const data = extractDestinationAndName(filePath, destination);
-  const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
+    if (!model.keyboard) {
+        return null;
+    }
+    const data = extractDestinationAndName(filePath, destination);
+    const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
 
-  const tickCount = parseInt(model.music.tickCount);
+    const tickCount = parseInt(model.music.tickCount);
 
-  const midiAudioPath = path.join("..", audioPath);
-  const keyboardBindingConfig = model.keyboard?.bindingConf;
-  const instrumentName = keyboardBindingConfig?.instrument.instrument;
-  const instrumentNumber =
-    Object.entries(keyboard_instruments).find(
-      ([key, _]) => key === instrumentName
-    )?.[1] ?? 0;
-  const musicName = model.music.name;
+    const midiAudioPath = path.join("..", audioPath);
+    const keyboardBindingConfig = model.keyboard?.bindingConf;
+    const instrumentName = keyboardBindingConfig?.instrument.instrument;
+    const instrumentNumber =
+        Object.entries(keyboard_instruments).find(
+            ([key, _]) => key === instrumentName
+        )?.[1] ?? 0;
+    const musicName = model.music.name;
 
     const assetsFolder = path.join(
         "assets",
@@ -295,7 +306,7 @@ export function generateKeyboardProgram(
     );
     const instrumentImage = path.join(assetsFolder, "image.png");
 
-  let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title>
+    let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title>
   <style>body {font-family: monospace;font-size: 1.5rem;text-align: center; }h1 {font-size: 3rem;}#instrument_image { width: 40px;}
   #log {background-color: beige;border: black solid 1px;padding: 10px;position: fixed;bottom: 10px;right: 10px;max-height: 50vh;overflow: scroll;} #rec-text { font-size: 1rem; }
   #rec-logo { width: 10px; height: 10px; border-radius: 5px; background: red; margin-right: 5px; } #rec {display: none; left: 30px; top: 30px; position: fixed; align-items: center;
@@ -310,12 +321,12 @@ export function generateKeyboardProgram(
         const note = binding.note;
         const notePath = path.join(assetsFolder, note + ".mp3");
 
-    htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}" note="${note}"></audio>`;
-  });
+        htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}" note="${note}"></audio>`;
+    });
 
-  htmlWriter += "<p id='log'></p>";
+    htmlWriter += "<p id='log'></p>";
 
-  htmlWriter += `<script>
+    htmlWriter += `<script>
     let firstDate = null;
     const log = document.getElementById("log");
     const rec = document.getElementById("rec");
@@ -343,6 +354,12 @@ export function generateKeyboardProgram(
     fs.writeFileSync(generatedFilePath, htmlWriter, "utf-8");
 
     return generatedFilePath;
+}
+
+function generateDrumsEvents(trackMidi: MidiWriter.Track, drumNotes: DrumNote[], ticks: number) {
+    drumNotes.forEach(note => {
+        addDrumEvent(trackMidi, note, ticks);
+    });
 }
 
 export function generateJavaScript(model: QuoicouBeats, filePath: string, destination: string | undefined): string {
@@ -374,9 +391,7 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         if (track.instrument.instrument === 'Drums') {
             // Drums
             let drumNotes = track.notes.filter(note => isDrumNote(note)) as DrumNote[];
-
-            fillStacks(drumNotes, tickCount);
-            generateMidiEvents(trackMidi, tickCount);
+            generateDrumsEvents(trackMidi, drumNotes, tickCount);
         } else {
             // Other instruments
             let notes: ClassicNote[] = [];
