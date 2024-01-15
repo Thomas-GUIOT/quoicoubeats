@@ -1,5 +1,5 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import {isClassicNote, isNote, Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
+import {isClassicNote, Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
 import type { QuoicouBeatsServices } from './quoicou-beats-module.js';
 import instruments from '../instruments.json' assert { type: 'json' };
 import keyboard_instrument from '../keyboard_instruments.json' assert { type: 'json' };
@@ -83,7 +83,7 @@ export class QuoicouBeatsValidator {
         if (music.defaultNoteType === undefined || music.defaultNoteType === '') {
             // Check if an octave is undefined and if so, throw an error
             music.tracks.forEach(track => {
-                track.notes.filter(note => isNote(note)).forEach(note => {
+                track.notes.filter(note => isClassicNote(note)).forEach(note => {
                     if (isClassicNote(note)) {
                         if (note.noteType === undefined || note.noteType === '') {
                             accept('error', 'Presence of note type not defined, the default note type must be defined.', { node: music, property: 'defaultNoteType' });

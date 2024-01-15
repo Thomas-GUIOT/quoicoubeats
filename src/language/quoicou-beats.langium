@@ -32,7 +32,7 @@ Binding:
     
 PatternDeclaration:
     'declare' name=STRING '{'
-        (notes+=Note)+
+        (notes+=DrumNote|ClassicNote)+
     '}';
 
 Track:
@@ -44,21 +44,23 @@ Track:
     '}';
 
 PatternOrNote:
-    (PatternReference | Note);
+    (PatternReference | ClassicNote | DrumNote);
 
 PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
 
-Note:
-    (DrumNote | ClassicNote)
+fragment Note:
     ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
 
 DrumNote:
-    element=DRUMNOTE;
+    element=DRUMNOTE
+    Note;
 
 ClassicNote:
+    note=NOTE
     (octave=INT)?
-    (noteType=NoteType)?;
+    (noteType=NoteType)?
+    Note;
 
 Instrument:
     'Instrument' instrument=STRING;

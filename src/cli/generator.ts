@@ -125,6 +125,7 @@ function fillStacks(notes: ClassicNote[], tickCount: number) {
 
     notes.forEach(note => {
         const endTickMark = noteTypeToTicks(note.noteType ?? 'ronde', tickCount);
+        console.log(`noteDelay: ${note.delay} notePause: ${note.pause} noteStart: ${previousNoteMarks.start} noteEnd: ${previousNoteMarks.end}`)
         const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
         const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
         const noteStart = note.delay.length ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
