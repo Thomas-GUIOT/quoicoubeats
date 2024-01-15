@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {QuoicouBeats, Track, ClassicNote, isClassicNote} from "../language/generated/ast.js";
+import {QuoicouBeats, Track, ClassicNote, isClassicNote, DrumNote, isDrumNote} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
@@ -63,43 +63,22 @@ function noteToPitch(note: any): string {
     }
 }
 
-// function noteTypeToDuration(noteType: string): string {
-//     switch (noteType) {
-//         case 'ronde':
-//             return '1';
-//         case 'blanche':
-//             return '2';
-//         case 'noire':
-//             return '4';
-//         case 'croche':
-//             return '8';
-//         case 'doubleCroche':
-//             return '16';
-//         case 'tripleCroche':
-//             return '32';
-//         case 'quadrupleCroche':
-//             return '64';
-//         default:
-//             throw new Error(`Type de note inconnu: ${noteType}`);
-//     }
-// }
-
-// function getDrumInstrument(note: string): number {
-//     switch (note) {
-//         case 'kd':
-//         case 'bd':
-//             return 35;
-//         case 'sd':
-//             return 38;
-//         case 'hh':
-//         case 'ch':
-//             return 42;
-//         case 'oh':
-//             return 46;
-//         default:
-//             return 56;
-//     }
-// }
+function getDrumInstrument(note: string): number {
+    switch (note) {
+        case 'kd':
+        case 'bd':
+            return 35;
+        case 'sd':
+            return 38;
+        case 'hh':
+        case 'ch':
+            return 42;
+        case 'oh':
+            return 46;
+        default:
+            return 56;
+    }
+}
 
 function noteTypeToTicks(noteType: string, ticks: number): number {
     if (!noteType) return 0;
@@ -117,17 +96,21 @@ function noteTypeToTicks(noteType: string, ticks: number): number {
     else throw new Error(`Type de note inconnu: ${noteType}`);
 }
 
-function fillStacks(notes: ClassicNote[], tickCount: number) {
+function fillStacks(notes: ClassicNote[]|DrumNote[], tickCount: number) {
     let previousNoteMarks = {
         start: 0,
         end: 0,
     }
 
     notes.forEach(note => {
-        const endTickMark = noteTypeToTicks(note.noteType ?? 'ronde', tickCount);
+        let noteType;
+        if (isDrumNote(note)) noteType = 'doubleCroche';
+        else noteType = note.noteType;
+        const endTickMark = noteTypeToTicks(noteType ?? 'ronde', tickCount);
         console.log(`noteDelay: ${note.delay} notePause: ${note.pause} noteStart: ${previousNoteMarks.start} noteEnd: ${previousNoteMarks.end}`)
         const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
         const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
+        console.log('PAUSE: ', note.pause)
         const noteStart = note.delay.length ? previousNoteMarks.start + noteDelay : previousNoteMarks.end + notePause;
         const noteEnd = noteStart + endTickMark;
         // console.log(`note: ${note.note} noteDelay: ${noteDelay} notePause: ${notePause} noteStart: ${noteStart} noteEnd: ${noteEnd}`)
@@ -170,24 +153,33 @@ function fillStacks(notes: ClassicNote[], tickCount: number) {
     console.log("------------------");
 }
 
-function addOnEvent(track: MidiWriter.Track, note: any, ticks: number) {
+function addOnEvent(track: MidiWriter.Track, note: ClassicNote|DrumNote, ticks: number) {
     const noteOptions: any = {
-        pitch: [noteToPitch(note)],
+        pitch: [isClassicNote(note) ? noteToPitch(note) : getDrumInstrument(note.element)],
         velocity: 100,
     };
     const delay = note.delay
         .flatMap((delay: string) => delay)
         .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
     if (delay > 0) noteOptions.wait = `t${delay}`;
-    console.log(
-        `> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`
-    );
-    track.addEvent(new MidiWriter.NoteOnEvent(noteOptions));
+    if (isClassicNote(note)) {
+        console.log(
+            `> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`
+        );
+    } else {
+        console.log(
+            `> ON note: ${note.element} options: ${JSON.stringify(noteOptions)}`
+        );
+    }
+    track.addEvent(new MidiWriter.NoteOnEvent({
+        ...noteOptions,
+        channel: isClassicNote(note) ? 1 : 10,
+    }));
 }
 
 function addOffEvent(
     track: MidiWriter.Track,
-    note: any,
+    note: ClassicNote|DrumNote,
     ticks: number,
     delta: number | undefined = undefined
 ) {
@@ -199,18 +191,27 @@ function addOffEvent(
         ? 0
         : isAccord
             ? 0
-            : noteTypeToTicks(note.noteType, ticks);
+            : (isClassicNote(note) ? noteTypeToTicks(note.noteType!, ticks) : noteTypeToTicks('doubleCroche', ticks));
     // console.log(`duration: ${duration}`)
     // console.log(`delta: ${delta}`)
     const noteOptions: any = {
-        pitch: [noteToPitch(note)],
+        pitch: [isClassicNote(note) ? noteToPitch(note) : getDrumInstrument(note.element)],
         duration: `t${duration}`,
     };
     if (delta) noteOptions.delta = delta;
-    console.log(
-        `> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`
-    );
-    track.addEvent(new MidiWriter.NoteOffEvent(noteOptions));
+    if (isClassicNote(note)) {
+        console.log(
+            `> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`
+        );
+    } else {
+        console.log(
+            `> OFF note: ${note.element} options: ${JSON.stringify(noteOptions)}`
+        );
+    }
+    track.addEvent(new MidiWriter.NoteOffEvent({
+        ...noteOptions,
+        channel: isClassicNote(note) ? 1 : 10,
+    }));
 }
 
 function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
@@ -369,17 +370,16 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
         trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(parseInt(model.music.tempo));
-        let notes: ClassicNote[] = [];
-        // let drumNotes: DrumNote[] = [];
 
         if (track.instrument.instrument === 'Drums') {
-            // track.drumNotes.forEach(drumNote => {
-            //
-            // });
+            // Drums
+            let drumNotes = track.notes.filter(note => isDrumNote(note)) as DrumNote[];
 
-            // fillStacks(drumNotes, tickCount);
+            fillStacks(drumNotes, tickCount);
             generateMidiEvents(trackMidi, tickCount);
         } else {
+            // Other instruments
+            let notes: ClassicNote[] = [];
             track.notes.forEach(note => {
                 if (isClassicNote(note)) {
                     replaceDefaultValue(defaultOctave, defaultNoteType, note);

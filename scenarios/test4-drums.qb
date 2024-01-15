@@ -7,14 +7,13 @@ Music "Chord" {
         Track "Main" {
             Instrument "Drums"
             Notes {
-                Instrument "Drums"
                 kd
-                ch (chord)
+                ch (accord)
 
                 ch [croche doubleCroche]
 
                 sd [croche doubleCroche]
-                ch (chord)
+                ch (accord)
 
                 ch [croche doubleCroche]
             }
