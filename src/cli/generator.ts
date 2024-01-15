@@ -137,13 +137,15 @@ function fillStacks(notes: ClassicNote[]|DrumNote[], tickCount: number) {
     });
     MIDI_ON_Stack.sort((a, b) => {
         if (a.tickMark === b.tickMark) {
-            if (a.note.delay === "accord") return 1;
+            if (a.note.pause.length) return 1;
+            if (a.note.delay[0] === "accord") return -1;
             else return -1;
         } else return b.tickMark - a.tickMark;
     });
     MIDI_OFF_Stack.sort((a, b) => {
         if (a.tickMark === b.tickMark) {
-            if (a.note.delay === "accord") return 1;
+            if (a.note.pause.length) return 1;
+            if (a.note.delay[0] === "accord") return -1;
             else return -1;
         } else return b.tickMark - a.tickMark;
     });
@@ -166,9 +168,11 @@ function addOnEvent(track: MidiWriter.Track, note: ClassicNote, ticks: number) {
         pitch: [noteToPitch(note)],
         velocity: 100,
     };
-    const delay = note.delay
+    let delay = note.delay
         .flatMap((delay: string) => delay)
         .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
+    const pause = note.pause.map((pause: string) => pause).reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
+    delay += pause;
     if (delay > 0) noteOptions.wait = `t${delay}`;
     console.log(
         `> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`
@@ -395,7 +399,6 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         const trackMidi = new MidiWriter.Track();
         const instrumentNumber = Object.entries(instruments).find(([key, _]) => key === track.instrument.instrument)?.[1] ?? 0;
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
-        trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
         // trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(model.music.tempo);
 
@@ -414,6 +417,7 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
 
             generateDrumsEvents(trackMidi, newDrumNotes, tickCount);
         } else {
+            trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
             // Other instruments with classical notes (ensured by the validator)
             let notes: ClassicNote[] = [];
             track.notes.forEach(patternOrNote => {

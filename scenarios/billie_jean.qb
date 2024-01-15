@@ -4,11 +4,161 @@ Music "Billie Jean" {
     Ticks 128
 
     Tracks {
-        Track "Drums" {
+        Track "Batterie" {
             Instrument "Drums"
-            kd 1 0 0 0 1 0 0 0
-            sd 0 0 1 0 0 0 1 0
-            ch 1 1 1 1 1 1 1 1
+            Notes {
+                kd
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+
+
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                kd [croche]
+                ch (accord)
+
+                ch [croche]
+
+                sd [croche]
+                ch (accord)
+
+                ch [croche]
+            }
+        }
+        Track "Basse" {
+            Instrument "Bass"
+            Notes {
+                Fa# 4 croche
+                Do# 5 croche
+                Mi 5 croche
+                Fa# 5 croche
+                Mi 5 croche
+                Do# 5 croche
+                Si 4 croche
+                Do# 5 croche
+                Fa# 4 croche
+                Do# 5 croche
+                Mi 5 croche
+                Fa# 5 croche
+                Mi 5 croche
+                Do# 5 croche
+                Si 4 croche
+                Do# 5 croche
+                Fa# 4 croche
+                Do# 5 croche
+                Mi 5 croche
+                Fa# 5 croche
+                Mi 5 croche
+                Do# 5 croche
+                Si 4 croche
+                Do# 5 croche
+                Fa# 4 croche
+                Do# 5 croche
+                Mi 5 croche
+                Fa# 5 croche
+                Mi 5 croche
+                Do# 5 croche
+                Si 4 croche
+                Do# 5 croche
+            }
+        }
+        Track "Synth Square" {
+            Instrument "Synth Square"
+            Notes {
+                La 5 croche
+                Do# 6 croche (accord)
+                Fa# 6 croche (accord)
+
+                Si 5 croche [croche croche]
+                Sol# 6 croche (accord)
+                Re# 6 croche (accord)
+
+                Do# 6 croche [blanche]
+                Mi 6 croche (accord)
+                La 6 croche (accord)
+
+                Si 5 croche [croche croche]
+                Sol# 6 croche (accord)
+                Re# 6 croche (accord)
+
+                La 5 croche [blanche]
+                Do# 6 croche (accord)
+                Fa# 6 croche (accord)
+
+                Si 5 croche [croche croche]
+                Sol# 6 croche (accord)
+                Re# 6 croche (accord)
+
+                Do# 6 croche [blanche]
+                Mi 6 croche (accord)
+                La 6 croche (accord)
+
+                Si 5 croche [croche croche]
+                Sol# 6 croche (accord)
+                Re# 6 croche (accord)
+            }
         }
     }
 }
