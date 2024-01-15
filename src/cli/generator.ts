@@ -4,15 +4,16 @@ import {QuoicouBeats, Track, ClassicNote, isClassicNote} from "../language/gener
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
-import instruments from "../instruments.json" assert { type: 'json' };
+import instruments from "../instruments.json" assert { type: "json" };
+import keyboard_instruments from "../keyboard_instruments.json" assert { type: "json" };
 
 const MIDI_ON_Stack: StackNote[] = [];
 const MIDI_OFF_Stack: StackNote[] = [];
 
 type StackNote = {
-    tickMark: number,
-    note: any,
-}
+    tickMark: number;
+    note: any;
+};
 
 /**
  * Return the pitch for a note according to its octave using the MIDI standard (60 for C4)
@@ -21,41 +22,41 @@ type StackNote = {
 function noteToPitch(note: any): string {
     const octave = parseInt(note.octave);
     switch (note.note) {
-        case 'Do':
-        case 'C':
+        case "Do":
+        case "C":
             return (octave * 12).toString();
-        case 'Do#':
-        case 'C#':
+        case "Do#":
+        case "C#":
             return (1 + octave * 12).toString();
-        case 'Re':
-        case 'D':
+        case "Re":
+        case "D":
             return (2 + octave * 12).toString();
-        case 'Re#':
-        case 'D#':
+        case "Re#":
+        case "D#":
             return (3 + octave * 12).toString();
-        case 'Mi':
-        case 'E':
+        case "Mi":
+        case "E":
             return (4 + octave * 12).toString();
-        case 'Fa':
-        case 'F':
+        case "Fa":
+        case "F":
             return (5 + octave * 12).toString();
-        case 'Fa#':
-        case 'F#':
+        case "Fa#":
+        case "F#":
             return (6 + octave * 12).toString();
-        case 'Sol':
-        case 'G':
+        case "Sol":
+        case "G":
             return (7 + octave * 12).toString();
-        case 'Sol#':
-        case 'G#':
+        case "Sol#":
+        case "G#":
             return (8 + octave * 12).toString();
-        case 'La':
-        case 'A':
+        case "La":
+        case "A":
             return (9 + octave * 12).toString();
-        case 'La#':
-        case 'A#':
+        case "La#":
+        case "A#":
             return (10 + octave * 12).toString();
-        case 'Si':
-        case 'B':
+        case "Si":
+        case "B":
             return (11 + octave * 12).toString();
         default:
             throw new Error(`Note inconnue: ${note.note}`);
@@ -100,18 +101,18 @@ function noteToPitch(note: any): string {
 //     }
 // }
 
-function noteTypeToTicks(noteType: string, ticks:number): number {
+function noteTypeToTicks(noteType: string, ticks: number): number {
     if (!noteType) return 0;
     const noteTypeToTicks: any = {
-        'ronde': 4*ticks,
-        'blanche': 2*ticks,
-        'noire': ticks,
-        'croche': 0.5*ticks,
-        'doubleCroche': 0.25*ticks,
-        'tripleCroche': 0.125*ticks,
-        'quadrupleCroche': 0.0625*ticks,
-        'accord': 0,
-    }
+        ronde: 4 * ticks,
+        blanche: 2 * ticks,
+        noire: ticks,
+        croche: 0.5 * ticks,
+        doubleCroche: 0.25 * ticks,
+        tripleCroche: 0.125 * ticks,
+        quadrupleCroche: 0.0625 * ticks,
+        accord: 0,
+    };
     if (noteTypeToTicks[noteType] !== undefined) return noteTypeToTicks[noteType];
     else throw new Error(`Type de note inconnu: ${noteType}`);
 }
@@ -144,26 +145,28 @@ function fillStacks(notes: ClassicNote[], tickCount: number) {
     });
     MIDI_ON_Stack.sort((a, b) => {
         if (a.tickMark === b.tickMark) {
-            if (a.note.delay === 'accord') return 1;
+            if (a.note.delay === "accord") return 1;
             else return -1;
-        }
-        else return b.tickMark - a.tickMark;
+        } else return b.tickMark - a.tickMark;
     });
     MIDI_OFF_Stack.sort((a, b) => {
         if (a.tickMark === b.tickMark) {
-            if (a.note.delay === 'accord') return 1;
+            if (a.note.delay === "accord") return 1;
             else return -1;
-        }
-        else return b.tickMark - a.tickMark;
+        } else return b.tickMark - a.tickMark;
     });
 
     // print both stacks
-    console.log('------STACKS------')
-    console.log('MIDI_ON_Stack:')
-    MIDI_ON_Stack.forEach(note => console.log(`note: ${note.note.note} tickMark: ${note.tickMark}`))
-    console.log('MIDI_OFF_Stack:')
-    MIDI_OFF_Stack.forEach(note => console.log(`note: ${note.note.note} tickMark: ${note.tickMark}`))
-    console.log('------------------')
+    console.log("------STACKS------");
+    console.log("MIDI_ON_Stack:");
+    MIDI_ON_Stack.forEach((note) =>
+        console.log(`note: ${note.note.note} tickMark: ${note.tickMark}`)
+    );
+    console.log("MIDI_OFF_Stack:");
+    MIDI_OFF_Stack.forEach((note) =>
+        console.log(`note: ${note.note.note} tickMark: ${note.tickMark}`)
+    );
+    console.log("------------------");
 }
 
 function addOnEvent(track: MidiWriter.Track, note: any, ticks: number) {
@@ -171,18 +174,31 @@ function addOnEvent(track: MidiWriter.Track, note: any, ticks: number) {
         pitch: [noteToPitch(note)],
         velocity: 100,
     };
-    const delay = note.delay.flatMap((delay: string) => delay).reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
+    const delay = note.delay
+        .flatMap((delay: string) => delay)
+        .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
     if (delay > 0) noteOptions.wait = `t${delay}`;
-    console.log(`> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`);
+    console.log(
+        `> ON note: ${note.note} options: ${JSON.stringify(noteOptions)}`
+    );
     track.addEvent(new MidiWriter.NoteOnEvent(noteOptions));
 }
 
-function addOffEvent(track: MidiWriter.Track, note: any, ticks: number, delta: number | undefined = undefined) {
+function addOffEvent(
+    track: MidiWriter.Track,
+    note: any,
+    ticks: number,
+    delta: number | undefined = undefined
+) {
     // const delayValue = note.delay.flatMap((delay: string) => delay).reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
     // console.log(`note: ${note.note} delay: ${note.delay}`)
-    const isAccord = note.delay[0] === 'accord';
+    const isAccord = note.delay[0] === "accord";
     // console.log(`isAccord: ${isAccord}`)
-    const duration = delta ? 0 : isAccord ? 0 : noteTypeToTicks(note.noteType, ticks);
+    const duration = delta
+        ? 0
+        : isAccord
+            ? 0
+            : noteTypeToTicks(note.noteType, ticks);
     // console.log(`duration: ${duration}`)
     // console.log(`delta: ${delta}`)
     const noteOptions: any = {
@@ -190,7 +206,9 @@ function addOffEvent(track: MidiWriter.Track, note: any, ticks: number, delta: n
         duration: `t${duration}`,
     };
     if (delta) noteOptions.delta = delta;
-    console.log(`> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`);
+    console.log(
+        `> OFF note: ${note.note} options: ${JSON.stringify(noteOptions)}`
+    );
     track.addEvent(new MidiWriter.NoteOffEvent(noteOptions));
 }
 
@@ -198,8 +216,8 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
     // Add midi events with the correct order until both stack are empty
     let note = null;
     let previousEvents: any = {
-        on: {tickMark: 0, note: null},
-        off: {tickMark: 0, note: null},
+        on: { tickMark: 0, note: null },
+        off: { tickMark: 0, note: null },
     };
     while (MIDI_ON_Stack.length > 0 || MIDI_OFF_Stack.length > 0) {
         // Compare the top of the stack and take the one with the smallest tickMark
@@ -223,11 +241,12 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
             // console.log(`inspect: ${util.inspect(off)}}`)
             const previousOffEnd = previousEvents.on?.tickMark;
             const previousOffStart = previousEvents.off?.tickMark;
-            const mostRecentEvent = previousOffEnd > previousOffStart ? previousOffEnd : previousOffStart;
-            console.log(`mostRecentEvent: ${mostRecentEvent}`)
-            console.log(`note.tickMark: ${note.tickMark}`)
+            const mostRecentEvent =
+                previousOffEnd > previousOffStart ? previousOffEnd : previousOffStart;
+            console.log(`mostRecentEvent: ${mostRecentEvent}`);
+            console.log(`note.tickMark: ${note.tickMark}`);
             let delta = note.tickMark - mostRecentEvent;
-            console.log(`delta: ${delta}`)
+            console.log(`delta: ${delta}`);
             if (delta >= 0) addOffEvent(trackMidi, note.note, ticks, delta);
             else addOffEvent(trackMidi, note.note, ticks);
             previousEvents.off = off;
@@ -242,6 +261,64 @@ function replaceDefaultValue(defaultOctave: string, defaultNoteType: string, not
     if (note.noteType === undefined || note.noteType === '') {
         note.noteType = defaultNoteType;
     }
+}
+
+export function generateKeyboardProgram(
+    model: QuoicouBeats,
+    filePath: string,
+    destination: string | undefined,
+    audioPath: string
+): string | null {
+    if (!model.keyboard) {
+        return null;
+    }
+
+    const data = extractDestinationAndName(filePath, destination);
+    const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
+
+    const keyboardBindingConfig = model.keyboard?.bindingConf;
+    const instrumentName = keyboardBindingConfig?.instrument.instrument;
+    const instrumentNumber =
+        Object.entries(keyboard_instruments).find(
+            ([key, _]) => key === instrumentName
+        )?.[1] ?? 0;
+
+    const assetsFolder = path.join(
+        "assets",
+        "instruments",
+        instrumentNumber.toString()
+    );
+    const instrumentImage = path.join(assetsFolder, "image.png");
+
+    let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title>
+  <style>body {font-family: monospace;font-size: 1.5rem;text-align: center; }h1 {font-size: 3rem;}#instrument_image { width: 40px;}</style>
+  </head><body><h1>Instrument - ${instrumentName} <img id="instrument_image" src="${instrumentImage}" alt="${instrumentName}"/></h1><h3>Binding :</h3>`;
+
+    keyboardBindingConfig?.bindings.forEach((binding) => {
+        const keyToLowerCase = binding.key.toLowerCase();
+        const note = binding.note;
+        const notePath = path.join(assetsFolder, note + ".mp3");
+
+        htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}"></audio>`;
+    });
+
+    htmlWriter += `<script>
+    document.addEventListener('keydown', e => {
+        if (e.repeat) return
+        playNote(e.key);
+    })
+
+    let playNote = (key) => {
+        const noteSound = document.getElementById(key)
+        if(!noteSound) return;
+        noteSound.currentTime = 0
+        noteSound.play()
+    }
+    </script></body></html>`;
+
+    fs.writeFileSync(generatedFilePath, htmlWriter, "utf-8");
+
+    return generatedFilePath;
 }
 
 export function generateJavaScript(model: QuoicouBeats, filePath: string, destination: string | undefined): string {
@@ -356,7 +433,7 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
 
     const write = new MidiWriter.Writer(midiTracks);
     const midiData = write.buildFile();
-    fs.writeFileSync(generatedFilePath, midiData, 'binary');
+    fs.writeFileSync(generatedFilePath, midiData, "binary");
 
     return generatedFilePath;
 }
