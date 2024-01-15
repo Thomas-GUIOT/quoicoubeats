@@ -179,23 +179,18 @@ function addOnEvent(track: MidiWriter.Track, note: ClassicNote, ticks: number) {
     }));
 }
 
-function addDrumEvent(track: MidiWriter.Track, note: DrumNote, ticks: number) {
+function addDrumEvent(track: MidiWriter.Track, note: DrumNote[], ticks: number) {
+    let pitch= note.map(note => getDrumInstrument(note.element));
     const noteOptions: any = {
-        pitch: [getDrumInstrument(note.element)],
+        pitch: pitch,
         velocity: 100,
-        duration: `t1`,
+        duration: 't1',
         channel: 10,
     };
-    let delay = note.delay
-        .flatMap((delay: string) => delay)
-        .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
-    const pause = note.pause
-        .flatMap((pause: string) => pause)
-        .reduce((a: number, b: string) => a + noteTypeToTicks(b, ticks), 0);
-    delay += pause;
-    if (delay >= 0) noteOptions.wait = `t${delay}`;
+    let pause = note[0].pause.map(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,ticks), 0);
+    if (pause > 0) noteOptions.wait = `t${pause-1}`;
     console.log(
-        `> DRUM : ${note.element} options: ${JSON.stringify(noteOptions)}`
+        `> DRUM : ${isDrumNote(note) ? note.element : note.flatMap(note => note.element)} options: ${JSON.stringify(noteOptions)}`
     );
     track.addEvent(new MidiWriter.NoteEvent({
         ...noteOptions,
@@ -296,7 +291,7 @@ export function generateKeyboardProgram(
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
 
-  const tickCount = model.music.tickCount;
+    const tickCount = model.music.tickCount;
 
     const midiAudioPath = path.join("..", audioPath);
     const keyboardBindingConfig = model.keyboard?.bindingConf;
@@ -364,7 +359,7 @@ export function generateKeyboardProgram(
     return generatedFilePath;
 }
 
-function generateDrumsEvents(trackMidi: MidiWriter.Track, drumNotes: DrumNote[], ticks: number) {
+function generateDrumsEvents(trackMidi: MidiWriter.Track, drumNotes: DrumNote[][], ticks: number) {
     drumNotes.forEach(note => {
         addDrumEvent(trackMidi, note, ticks);
     });
@@ -401,13 +396,23 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         const instrumentNumber = Object.entries(instruments).find(([key, _]) => key === track.instrument.instrument)?.[1] ?? 0;
         trackMidi.addEvent(new MidiWriter.TimeSignatureEvent(numerator, denominator, 24, 8));
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
-        trackMidi.addInstrumentName(track.name);
+        // trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(model.music.tempo);
 
         if (track.instrument.instrument === 'Drums') {
             // Drums
             let drumNotes = track.notes.filter(note => isDrumNote(note)) as DrumNote[];
-            generateDrumsEvents(trackMidi, drumNotes, tickCount);
+            let newDrumNotes: DrumNote[][] = [];
+            drumNotes.forEach(note => {
+                console.log(`note: ${note.element} delay: ${note.delay}`)
+                if (note.delay[0] === 'accord') {
+                    newDrumNotes[newDrumNotes.length - 1].push(note);
+                } else {
+                    newDrumNotes.push([note]);
+                }
+            })
+
+            generateDrumsEvents(trackMidi, newDrumNotes, tickCount);
         } else {
             // Other instruments with classical notes (ensured by the validator)
             let notes: ClassicNote[] = [];
@@ -418,8 +423,8 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
                 } else if (isPatternReference(patternOrNote)) {
                     // On repète le pattern autant de fois que demandé
                     const repeatCount = patternOrNote.repeatCount
-                      ? patternOrNote.repeatCount
-                      : 1;
+                        ? patternOrNote.repeatCount
+                        : 1;
                     for (let i = 0; i < repeatCount; i++) {
                         patternOrNote.pattern.ref?.notes.forEach((note) => {
                             // Check for compilation but this should never happen thanks to the validator
@@ -476,24 +481,6 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         //         };
         //         trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
         //     }
-        // } else {
-        //     notes.forEach(note => {
-        //         if (note.note === 'Silence') {
-        //             silence += parseInt(noteTypeToDuration(note.noteType));
-        //             return;
-        //         }
-        //         let noteOptions: any = {
-        //             pitch: [noteToMidi(note.note)],
-        //             duration: noteTypeToDuration(note.noteType),
-        //             velocity: 100,
-        //             channel: channel,
-        //         };
-        //         if (silence > 0) {
-        //             noteOptions.wait = noteTypeToDuration(note.noteType);
-        //         }
-        //         trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
-        //         silence = 0;
-        //     });
         // }
         midiTracks.push(trackMidi)
     });
