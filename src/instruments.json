@@ -1,4 +1,7 @@
 {
-    "Piano": 1,
-    "Drums": 10
+  "Piano": 1,
+  "Drums": 10,
+  "Guitar": 25,
+  "Violin": 41,
+  "Bass": 57
 }

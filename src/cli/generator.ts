@@ -270,19 +270,22 @@ export function generateKeyboardProgram(
     destination: string | undefined,
     audioPath: string
 ): string | null {
-    if (!model.keyboard) {
-        return null;
-    }
+  if (!model.keyboard) {
+    return null;
+  }
+  const data = extractDestinationAndName(filePath, destination);
+  const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
 
-    const data = extractDestinationAndName(filePath, destination);
-    const generatedFilePath = `${path.join(data.destination, data.name)}-wk.html`;
+  const tickCount = parseInt(model.music.tickCount);
 
-    const keyboardBindingConfig = model.keyboard?.bindingConf;
-    const instrumentName = keyboardBindingConfig?.instrument.instrument;
-    const instrumentNumber =
-        Object.entries(keyboard_instruments).find(
-            ([key, _]) => key === instrumentName
-        )?.[1] ?? 0;
+  const midiAudioPath = path.join("..", audioPath);
+  const keyboardBindingConfig = model.keyboard?.bindingConf;
+  const instrumentName = keyboardBindingConfig?.instrument.instrument;
+  const instrumentNumber =
+    Object.entries(keyboard_instruments).find(
+      ([key, _]) => key === instrumentName
+    )?.[1] ?? 0;
+  const musicName = model.music.name;
 
     const assetsFolder = path.join(
         "assets",
@@ -291,19 +294,31 @@ export function generateKeyboardProgram(
     );
     const instrumentImage = path.join(assetsFolder, "image.png");
 
-    let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title>
-  <style>body {font-family: monospace;font-size: 1.5rem;text-align: center; }h1 {font-size: 3rem;}#instrument_image { width: 40px;}</style>
-  </head><body><h1>Instrument - ${instrumentName} <img id="instrument_image" src="${instrumentImage}" alt="${instrumentName}"/></h1><h3>Binding :</h3>`;
+  let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title>
+  <style>body {font-family: monospace;font-size: 1.5rem;text-align: center; }h1 {font-size: 3rem;}#instrument_image { width: 40px;}
+  #log {background-color: beige;border: black solid 1px;padding: 10px;position: fixed;bottom: 10px;right: 10px;max-height: 50vh;overflow: scroll;} #rec-text { font-size: 1rem; }
+  #rec-logo { width: 10px; height: 10px; border-radius: 5px; background: red; margin-right: 5px; } #rec {display: none; left: 30px; top: 30px; position: fixed; align-items: center;
+  animation-duration: .8s; animation-name: clignoter; animation-iteration-count: infinite;} @keyframes clignoter { 0%   { opacity:1; } 40%   {opacity:0; } 100% { opacity:1; }}</style>
+  <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+  </head><body><div id="rec"><div id="rec-logo"></div><div id="rec-text">Recording...</div></div><h1>Play - ${musicName}</h1><midi-player loop sound-font visualizer="#myPianoRollVisualizer" src="${midiAudioPath}"></midi-player>
+  <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="${midiAudioPath}"></midi-visualizer>
+  <h1>Instrument - ${instrumentName} <img id="instrument_image" src="${instrumentImage}" alt="${instrumentName}"/></h1><h3>Binding :</h3>`;
 
     keyboardBindingConfig?.bindings.forEach((binding) => {
         const keyToLowerCase = binding.key.toLowerCase();
         const note = binding.note;
         const notePath = path.join(assetsFolder, note + ".mp3");
 
-        htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}"></audio>`;
-    });
+    htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}" note="${note}"></audio>`;
+  });
 
-    htmlWriter += `<script>
+  htmlWriter += "<p id='log'></p>";
+
+  htmlWriter += `<script>
+    let firstDate = null;
+    const log = document.getElementById("log");
+    const rec = document.getElementById("rec");
+
     document.addEventListener('keydown', e => {
         if (e.repeat) return
         playNote(e.key);
@@ -312,8 +327,15 @@ export function generateKeyboardProgram(
     let playNote = (key) => {
         const noteSound = document.getElementById(key)
         if(!noteSound) return;
-        noteSound.currentTime = 0
-        noteSound.play()
+        if (firstDate == null) {
+            rec.style.display = "flex";
+            firstDate = new Date().getTime();
+        }
+        const currentMinute = (new Date().getTime() - firstDate) / 60000;
+        const tick = ${tickCount} * currentMinute;
+        log.innerText += noteSound.attributes.note.value + " at tick " + (Math.round(tick * 10) / 10) + "\\n";
+        noteSound.currentTime = 0;
+        noteSound.play();
     }
     </script></body></html>`;
 
