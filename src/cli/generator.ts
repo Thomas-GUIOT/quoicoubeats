@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { extractDestinationAndName } from './cli-util.js';
-import {QuoicouBeats, Track, Note} from "../language/generated/ast.js";
+import {QuoicouBeats, Track, ClassicNote, isClassicNote} from "../language/generated/ast.js";
 import MidiWriter from 'midi-writer-js';
 import * as fs from "fs";
 
@@ -116,13 +116,13 @@ function noteTypeToTicks(noteType: string, ticks:number): number {
     else throw new Error(`Type de note inconnu: ${noteType}`);
 }
 
-function fillStacks(track: Track, tickCount: number) {
+function fillStacks(notes: ClassicNote[], tickCount: number) {
     let previousNoteMarks = {
         start: 0,
         end: 0,
     }
 
-    track.notes.forEach(note => {
+    notes.forEach(note => {
         const endTickMark = noteTypeToTicks(note.noteType ?? 'ronde', tickCount);
         const noteDelay = note.delay.flatMap(delay => delay).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
         const notePause = note.pause.flatMap(pause => pause).reduce((a, b) => a + noteTypeToTicks(b,tickCount), 0);
@@ -235,7 +235,7 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
     }
 }
 
-function replaceDefaultValue(defaultOctave: string, defaultNoteType: string, note: Note) {
+function replaceDefaultValue(defaultOctave: string, defaultNoteType: string, note: ClassicNote) {
     if (note.octave === undefined || note.octave === '') {
         note.octave = defaultOctave;
     }
@@ -269,13 +269,27 @@ export function generateJavaScript(model: QuoicouBeats, filePath: string, destin
         trackMidi.addEvent(new MidiWriter.ProgramChangeEvent({instrument: instrumentNumber}));
         trackMidi.addInstrumentName(track.name);
         trackMidi.setTempo(parseInt(model.music.tempo));
+        let notes: ClassicNote[] = [];
+        // let drumNotes: DrumNote[] = [];
 
-        track.notes.forEach(note => {
-            replaceDefaultValue(defaultOctave, defaultNoteType, note);
-        });
+        if (track.instrument.instrument === 'Drums') {
+            // track.drumNotes.forEach(drumNote => {
+            //
+            // });
 
-        fillStacks(track, tickCount);
-        generateMidiEvents(trackMidi, tickCount);
+            // fillStacks(drumNotes, tickCount);
+            generateMidiEvents(trackMidi, tickCount);
+        } else {
+            track.notes.forEach(note => {
+                if (isClassicNote(note)) {
+                    replaceDefaultValue(defaultOctave, defaultNoteType, note);
+                    notes.push(note);
+                }
+            });
+
+            fillStacks(notes, tickCount);
+            generateMidiEvents(trackMidi, tickCount);
+        }
 
         // const notes = track.notesOrPatterns.flatMap(noteOrPattern => {
         //     if (isNote(noteOrPattern)) {

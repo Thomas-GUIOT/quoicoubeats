@@ -39,24 +39,26 @@ Track:
     'Track' name=STRING '{'
         instrument=Instrument
         'Notes' '{'
-            (notes+=Note)+
+            (notes+=PatternOrNote)+
         '}'
     '}';
 
 PatternOrNote:
-    Note | PatternReference | DrumNote;
-
-DrumNote:
-    note=DRUMNOTE (bars+=INT)+;
+    (PatternReference | Note);
 
 PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
 
 Note:
-    note=NOTE
-    (octave=INT)?
-    (noteType=NoteType)?
+    (DrumNote | ClassicNote)
     ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
+
+DrumNote:
+    element=DRUMNOTE;
+
+ClassicNote:
+    (octave=INT)?
+    (noteType=NoteType)?;
 
 Instrument:
     'Instrument' instrument=STRING;
@@ -67,5 +69,5 @@ terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrup
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
 terminal STRING: /"([^"\\]|\\.)*"/;
-terminal NOTE: /(Silence|Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;
+terminal NOTE: /(Do|Re|Mi|Fa|Sol|La|Si)[#b]?/;
 terminal KeyboardKey: /(Space|[A-Z])/;

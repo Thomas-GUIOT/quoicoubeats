@@ -1,0 +1,23 @@
+Music "Chord" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Main" {
+            Instrument "Drums"
+            Notes {
+                Instrument "Drums"
+                kd
+                ch (chord)
+
+                ch [croche doubleCroche]
+
+                sd [croche doubleCroche]
+                ch (chord)
+
+                ch [croche doubleCroche]
+            }
+        }
+    }
+}

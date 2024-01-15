@@ -1,5 +1,5 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import {Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
+import {isNote, Keyboard, Music, QuoicouBeatsAstType} from './generated/ast.js';
 import type { QuoicouBeatsServices } from './quoicou-beats-module.js';
 import instruments from '../instruments.json' assert { type: 'json' };
 
@@ -11,13 +11,13 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
     const validator = services.validation.QuoicouBeatsValidator;
     const checks: ValidationChecks<QuoicouBeatsAstType> = {
         Music: [validator.checkTicksIsUnder128.bind(validator),
-                validator.checkDenominatorIsCorrect.bind(validator),
-                validator.checkNumeratorIsCorrect.bind(validator),
-                validator.checkIsValidInstrumentMusic.bind(validator),
-                validator.checkDefaultOctaveIsCorrectOrNecessary.bind(validator),
-                validator.checkDefaultNoteTypeIsCorrectOrNecessary.bind(validator)],
+            validator.checkDenominatorIsCorrect.bind(validator),
+            validator.checkNumeratorIsCorrect.bind(validator),
+            validator.checkIsValidInstrumentMusic.bind(validator),
+            validator.checkDefaultOctaveIsCorrectOrNecessary.bind(validator),
+            validator.checkDefaultNoteTypeIsCorrectOrNecessary.bind(validator)],
         Keyboard: [validator.checkIsValidInstrumentKeyboard.bind(validator),
-                   validator.checkKeyboardIsNotAlreadyUsed.bind(validator)]
+            validator.checkKeyboardIsNotAlreadyUsed.bind(validator)]
     };
     registry.register(checks, validator);
 }
@@ -60,9 +60,11 @@ export class QuoicouBeatsValidator {
         if (music.defaultOctave === undefined || music.defaultOctave === '') {
             // Check if an octave is undefined and if so, throw an error
             music.tracks.forEach(track => {
-                track.notes.forEach(note => {
-                    if (note.octave === undefined || note.octave === '') {
-                        accept('error', 'Presence of octave not defined, the default octave must be defined.', { node: music, property: 'defaultOctave' });
+                track.notes.filter((note) => isNote(note)).forEach(note => {
+                    if (isNote(note)) {
+                        if (note.octave === undefined || note.octave === '') {
+                            accept('error', 'Presence of octave not defined, the default octave must be defined.', { node: music, property: 'defaultOctave' });
+                        }
                     }
                 });
             });
@@ -80,9 +82,11 @@ export class QuoicouBeatsValidator {
         if (music.defaultNoteType === undefined || music.defaultNoteType === '') {
             // Check if an octave is undefined and if so, throw an error
             music.tracks.forEach(track => {
-                track.notes.forEach(note => {
-                    if (note.noteType === undefined || note.noteType === '') {
-                        accept('error', 'Presence of note type not defined, the default note type must be defined.', { node: music, property: 'defaultNoteType' });
+                track.notes.filter(note => isNote(note)).forEach(note => {
+                    if (isNote(note)) {
+                        if (note.noteType === undefined || note.noteType === '') {
+                            accept('error', 'Presence of note type not defined, the default note type must be defined.', { node: music, property: 'defaultNoteType' });
+                        }
                     }
                 });
             });
@@ -94,7 +98,7 @@ export class QuoicouBeatsValidator {
     checkIsValidInstrumentKeyboard(keyboard: Keyboard, accept: ValidationAcceptor): void {
         const instrument = keyboard.bindingConf.instrument.instrument;
         if (!Object.keys(instruments).includes(instrument))
-                accept('error', `Instrument ${instrument} is not supported.`, { node: keyboard.bindingConf, property: 'instrument' });
+            accept('error', `Instrument ${instrument} is not supported.`, { node: keyboard.bindingConf, property: 'instrument' });
     }
 
     checkKeyboardIsNotAlreadyUsed(keyboard: Keyboard, accept: ValidationAcceptor): void {
