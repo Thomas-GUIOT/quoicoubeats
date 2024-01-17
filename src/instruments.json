@@ -1,8 +1,7 @@
 {
   "Piano": 1,
-  "Drums": 0,
-  "Guitar": 24,
-  "Violin": 40,
-  "Bass": 32,
-  "Synth Square": 80,
+  "Drums": 10,
+  "Guitar": 25,
+  "Violin": 41,
+  "Bass": 57
 }
