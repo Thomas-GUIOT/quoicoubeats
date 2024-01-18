@@ -46,7 +46,7 @@ Music "Billie Jean" {
 
                 ch [croche]
 
-
+                TimeSignature 3/4
                 kd [croche]
                 ch (accord)
 

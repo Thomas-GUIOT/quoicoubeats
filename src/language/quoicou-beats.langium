@@ -45,8 +45,11 @@ Track:
         '}'
     '}';
 
+TimeSignatureChange:
+    'Time' 'Signature' numerator=INT '/' denominator=INT;
+
 PatternOrNote:
-    (PatternReference | ClassicNote | DrumNote);
+    (PatternReference | ClassicNote | DrumNote | TimeSignatureChange);
 
 PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;

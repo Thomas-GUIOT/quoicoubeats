@@ -3,16 +3,15 @@ import type { QuoicouBeatsServices } from "./quoicou-beats-module.js";
 import instruments from "../instruments.json" assert { type: "json" };
 import keyboard_instrument from "../keyboard_instruments.json" assert { type: "json" };
 import {
-  ClassicNote,
-  isClassicNote,
-  isDrumNote,
-  isPatternReference,
-  Keyboard,
-  Music,
-  PatternDeclaration,
-  QuoicouBeatsAstType,
-  Track,
-} from "./generated/ast.js";
+    ClassicNote,
+    isClassicNote,
+    isDrumNote, isPatternReference, isTimeSignatureChange,
+    Keyboard,
+    Music,
+    PatternDeclaration,
+    QuoicouBeatsAstType,
+    Track
+} from './generated/ast.js';
 
 /**
  * Register custom validation checks.
@@ -129,45 +128,30 @@ export class QuoicouBeatsValidator {
     });
   }
 
-  // Check if track notes are correct (drum and classic notes cannot be mixed)
-  checkTrackNotesAreCorrect(track: Track, accept: ValidationAcceptor): void {
-    const isDrum = track.instrument.instrument === "Drums";
-    track.notes.forEach((patternOrNote) => {
-      if (isPatternReference(patternOrNote)) {
-        if (
-          patternOrNote.repeatCount !== undefined &&
-          patternOrNote.repeatCount <= 0
-        ) {
-          accept(
-            "error",
-            `The track ${track.name} contains a pattern reference with a repeat count <= of 0, it is not allowed.`,
-            {
-              node: track,
-              property: "notes",
+    // Check if track notes are correct (drum and classic notes cannot be mixed)
+    checkTrackNotesAreCorrect(track: Track, accept: ValidationAcceptor): void {
+        const isDrum = track.instrument.instrument === 'Drums';
+        track.notes.filter(note => !isTimeSignatureChange(note)).forEach(patternOrNote => {
+          if (isPatternReference(patternOrNote)) {
+            if (patternOrNote.repeatCount !== undefined && patternOrNote.repeatCount <= 0) {
+              accept('error', `The track ${track.name} contains a pattern reference with a repeat count <= of 0, it is not allowed.`, {
+                node: track,
+                property: 'notes'
+              });
             }
-          );
-        }
-        if (isDrum != isDrumNote(patternOrNote.pattern.ref?.notes[0])) {
-          accept(
-            "error",
-            `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`,
-            {
-              node: track,
-              property: "notes",
+            if (isDrum != isDrumNote(patternOrNote.pattern.ref?.notes[0])) {
+              accept('error', `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`, {
+                node: track,
+                property: 'notes'
+              });
             }
-          );
-        }
-      } else if (isDrum != isDrumNote(patternOrNote)) {
-        accept(
-          "error",
-          `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`,
-          {
-            node: track,
-            property: "notes",
+          } else if (isDrum != isDrumNote(patternOrNote)) {
+            accept('error', `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`, {
+              node: track,
+              property: 'notes'
+            });
           }
-        );
-      }
-    });
+        });
   }
 
   checkDefaultOctaveIsCorrectOrNecessary(
