@@ -25,9 +25,8 @@ Keyboard:
     '}';
 
 InstrumentBinding:
-    instrument=Instrument '{'
-        (bindings+=Binding)+
-    '}';
+    instrument=Instrument
+    'Bindings' '{' (bindings+=Binding)+ '}';
 
 Binding:
     'Key' key=KeyboardKey '->' note=(DrumNote | ClassicNote);

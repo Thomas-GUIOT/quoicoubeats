@@ -383,7 +383,7 @@ export function generateKeyboardProgram(
   #rec-logo { width: 10px; height: 10px; border-radius: 5px; background: red; margin-right: 5px; } #rec {display: none; left: 30px; top: 30px; position: fixed; align-items: center;
   animation-duration: .8s; animation-name: clignoter; animation-iteration-count: infinite;} @keyframes clignoter { 0%   { opacity:1; } 40%   {opacity:0; } 100% { opacity:1; }}</style>
   <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
-  </head><body><div id="rec"><div id="rec-logo"></div><div id="rec-text">Logging...</div></div><h1>Play - ${musicName}</h1><midi-player loop sound-font visualizer="#myPianoRollVisualizer" src="${midiAudioPath}"></midi-player>
+  </head><body><div id="rec"><div id="rec-logo"></div><div id="rec-text">Logging...</div></div><h1>Play - ${musicName}</h1><midi-player sound-font visualizer="#myPianoRollVisualizer" src="${midiAudioPath}"></midi-player>
   <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="${midiAudioPath}"></midi-visualizer>
   <h1>Instrument - ${instrumentName} <img id="instrument_image" src="${instrumentImage}" alt="${instrumentName}"/></h1><h3>Binding :</h3>`;
 
