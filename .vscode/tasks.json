@@ -3,19 +3,44 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
-        {
-            "label": "Build quoicou-beats",
-            "command": "npm run langium:generate && npm run build",
-            "type": "shell",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "detail": "Langium: Generate grammar and build the quoicou-beats language",
-            "icon": {
-                "color": "terminal.ansiGreen",
-                "id": "server-process"
-            }
+      {
+        "label": "Build quoicou-beats",
+        "command": "npm run langium:generate && npm run build",
+        "type": "shell",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "detail": "Langium: Generate grammar and build the quoicou-beats language",
+        "icon": {
+          "color": "terminal.ansiGreen",
+          "id": "server-process"
         }
-    ]
+      },
+      {
+        "label": "Run Shell Script",
+        "type": "shell",
+        "command": "sh",
+        "args": [
+          "${workspaceFolder}/launch.sh",
+          "${file}"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": []
+      }
+    ],  "compounds": [
+        {
+          "name": "Run Node.js on current scenario file",
+          "configurations": ["Exécuter Node.js sur le fichier scenarios actuel"]
+        }
+      ],
+      "files.associations": {
+        "*.qb": "Exécuter Node.js sur le fichier scenarios actuel"
+      }
 }
