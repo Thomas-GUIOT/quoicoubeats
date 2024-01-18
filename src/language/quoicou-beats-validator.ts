@@ -3,15 +3,18 @@ import type { QuoicouBeatsServices } from "./quoicou-beats-module.js";
 import instruments from "../instruments.json" assert { type: "json" };
 import keyboard_instrument from "../keyboard_instruments.json" assert { type: "json" };
 import {
-    ClassicNote,
-    isClassicNote,
-    isDrumNote, isPatternReference, isTimeSignatureChange,
-    Keyboard,
-    Music,
-    PatternDeclaration,
-    QuoicouBeatsAstType,
-    Track
-} from './generated/ast.js';
+  ClassicNote,
+  DrumNote,
+  isClassicNote,
+  isDrumNote,
+  isPatternReference,
+  isTimeSignatureChange,
+  Keyboard,
+  Music,
+  PatternDeclaration,
+  QuoicouBeatsAstType,
+  Track,
+} from "./generated/ast.js";
 
 /**
  * Register custom validation checks.
@@ -32,6 +35,7 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
     Keyboard: [
       validator.checkIsValidInstrumentKeyboard.bind(validator),
       validator.checkKeyboardIsNotAlreadyUsed.bind(validator),
+      validator.checkIsValidNoteWithInstrument.bind(validator),
     ],
     PatternDeclaration: [validator.checkPatternIsCorrect.bind(validator)],
     Track: [validator.checkTrackNotesAreCorrect.bind(validator)],
@@ -128,30 +132,47 @@ export class QuoicouBeatsValidator {
     });
   }
 
-    // Check if track notes are correct (drum and classic notes cannot be mixed)
-    checkTrackNotesAreCorrect(track: Track, accept: ValidationAcceptor): void {
-        const isDrum = track.instrument.instrument === 'Drums';
-        track.notes.filter(note => !isTimeSignatureChange(note)).forEach(patternOrNote => {
-          if (isPatternReference(patternOrNote)) {
-            if (patternOrNote.repeatCount !== undefined && patternOrNote.repeatCount <= 0) {
-              accept('error', `The track ${track.name} contains a pattern reference with a repeat count <= of 0, it is not allowed.`, {
+  // Check if track notes are correct (drum and classic notes cannot be mixed)
+  checkTrackNotesAreCorrect(track: Track, accept: ValidationAcceptor): void {
+    const isDrum = track.instrument.instrument === "Drums";
+    track.notes
+      .filter((note) => !isTimeSignatureChange(note))
+      .forEach((patternOrNote) => {
+        if (isPatternReference(patternOrNote)) {
+          if (
+            patternOrNote.repeatCount !== undefined &&
+            patternOrNote.repeatCount <= 0
+          ) {
+            accept(
+              "error",
+              `The track ${track.name} contains a pattern reference with a repeat count <= of 0, it is not allowed.`,
+              {
                 node: track,
-                property: 'notes'
-              });
-            }
-            if (isDrum != isDrumNote(patternOrNote.pattern.ref?.notes[0])) {
-              accept('error', `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`, {
-                node: track,
-                property: 'notes'
-              });
-            }
-          } else if (isDrum != isDrumNote(patternOrNote)) {
-            accept('error', `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`, {
-              node: track,
-              property: 'notes'
-            });
+                property: "notes",
+              }
+            );
           }
-        });
+          if (isDrum != isDrumNote(patternOrNote.pattern.ref?.notes[0])) {
+            accept(
+              "error",
+              `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`,
+              {
+                node: track,
+                property: "notes",
+              }
+            );
+          }
+        } else if (isDrum != isDrumNote(patternOrNote)) {
+          accept(
+            "error",
+            `The track ${track.name} contains both drum notes and classic notes, it is not allowed.`,
+            {
+              node: track,
+              property: "notes",
+            }
+          );
+        }
+      });
   }
 
   checkDefaultOctaveIsCorrectOrNecessary(
@@ -263,6 +284,27 @@ export class QuoicouBeatsValidator {
       });
   }
 
+  checkIsValidNoteWithInstrument(
+    keyboard: Keyboard,
+    accept: ValidationAcceptor
+  ): void {
+    const bindings = keyboard.bindingConf.bindings;
+    const instrument = keyboard.bindingConf.instrument.instrument;
+    const wantedType = instrument === "Drums" ? DrumNote : ClassicNote;
+    for (const binding of bindings) {
+      if (!binding.note?.$type)
+        accept("error", `The note you entered is not valid.`, {
+          node: binding,
+        });
+      else if (binding.note?.$type !== wantedType)
+        accept(
+          "error",
+          `The note you entered is a ${binding.note.$type.toString()}. Needed: ${wantedType}`,
+          { node: binding }
+        );
+    }
+  }
+
   checkKeyboardIsNotAlreadyUsed(
     keyboard: Keyboard,
     accept: ValidationAcceptor
@@ -271,11 +313,20 @@ export class QuoicouBeatsValidator {
     const alreadyDefinedKey: String[] = [];
     const alreadyDefinedNote: String[] = [];
     for (const binding of bindings) {
-      // Si il y a un # à la fin, erreur
-      if (binding.note.charAt(binding.note.length - 1) === "#")
-        accept("error", "The key should not contain #.", { node: binding });
+      if (!binding.note?.$type) break;
+      if (binding.note.$type === ClassicNote) {
+        // Si il y a un # à la fin de la note, erreur
+        if (binding.note.note.charAt(binding.note.note.length - 1) === "#")
+          accept("error", "The key should not contain #.", { node: binding });
 
-      // Si ce n'est pas en majuscule, erreur
+        // Si il y a autre chose que la note
+        if (binding.note.noteType || binding.note.octave)
+          accept("error", "The key should only contain the note.", {
+            node: binding,
+          });
+      }
+
+      // Si la key n'est pas en majuscule, erreur
       if (!binding.key)
         accept(
           "error",
@@ -289,12 +340,25 @@ export class QuoicouBeatsValidator {
         accept("error", `The key ${binding.key} is already used.`, {
           node: binding,
         });
-      if (alreadyDefinedNote.includes(binding.note))
-        accept("error", `The note ${binding.note} is already used.`, {
-          node: binding,
-        });
       alreadyDefinedKey.push(binding.key);
-      alreadyDefinedNote.push(binding.note);
+
+      // Si c'est une note classique
+      if (binding.note.$type === ClassicNote) {
+        if (alreadyDefinedNote.includes(binding.note.note))
+          accept("error", `The note ${binding.note.note} is already used.`, {
+            node: binding,
+          });
+        alreadyDefinedNote.push(binding.note.note);
+      }
+
+      // Si c'est une note de batterie
+      if (binding.note.$type === DrumNote) {
+        if (alreadyDefinedKey.includes(binding.note.element))
+          accept("error", `The note ${binding.note.element} is already used.`, {
+            node: binding,
+          });
+        alreadyDefinedKey.push(binding.note.element);
+      }
     }
   }
 

@@ -30,7 +30,7 @@ InstrumentBinding:
     '}';
 
 Binding:
-    'Key' key=KeyboardKey '->' note=NOTE;
+    'Key' key=KeyboardKey '->' note=(DrumNote | ClassicNote);
     
 PatternDeclaration:
     name=STRING '{'

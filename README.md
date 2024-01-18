@@ -11,4 +11,4 @@ open -na Google\ Chrome --args --user-data-dir=/tmp/temporary-chrome-profile-dir
 chrome.exe --user-data-dir=%TMP%\temporary-chrome-profile-dir --disable-web-security --disable-site-isolation-trials
 
 ### Linux
-TODO
+google-chrome --disable-web-security
