@@ -477,6 +477,51 @@ export function generateKeyboardProgram(
   return generatedFilePath;
 }
 
+function highlightKeywords(code: string): string {
+  const keywords = ['Music', 'Tempo', 'TimeSignature', 'Ticks', 
+  'Tracks', 'Track', 'Instrument', 'Notes', 'DefaultOctave', 'DefaultNoteType', 'KeyboardBinding'];
+
+  keywords.forEach(keyword => {
+    const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+    code = code.replace(regex, `<span class="keyword">${keyword}</span>`);
+  });
+
+  return code;
+}
+
+
+export function generateMidiPlayerAndVizualizer(
+  model: QuoicouBeats,
+  filePath: string,
+  destination: string | undefined,
+  audioPath: string
+): string | null {
+  const data = extractDestinationAndName(filePath, destination);
+  const generatedFilePath = `${path.join(data.destination, data.name)}-midi-vizualizer.html`;
+
+  const midiAudioPath = path.join("..", audioPath);
+
+  const musicName = model.music.name;
+
+  let htmlWriter = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIDI Player & Vizualizer</title><style>.title {text-align: center;}#all-container {display: flex;justify-content: center;}body {font-family: 'Courier New', monospace;background-color: #f4f4f4;margin: 2;height: 100vh;}.code-container {border: 1px solid #ccc;border-radius: 5px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;}code {display: block;white-space: pre-wrap;}.keyword {color: blue;/* Couleur pour les mots clés */font-weight: bold;}.comment {color: green;/* Couleur pour les commentaires */font-style: italic;}.player_part {border: 1px solid #ccc;border-radius: 5px;margin-left: 10px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;padding: 10px;display: flex;flex-direction: column;align-items: center;}</style>
+  <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script></head><body>
+  <h1 class="title">MIDI Player & Vizualizer for ${musicName}</h1><div id="all-container"><div class="code-container"><code></code></div><div class="player_part"><midi-player loop sound-font visualizer="#myPianoRollVisualizer" src="${midiAudioPath}"></midi-player>
+  <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="${midiAudioPath}"></midi-visualizer></div></div></body>
+  </html>`;
+
+  const fileContent = fs.readFileSync(filePath, 'utf-8');
+
+  const highlightedCode = highlightKeywords(fileContent);
+
+  const htmlCodeContent = `<code>${highlightedCode}</code>`;
+  htmlWriter = htmlWriter.replace('<code></code>', htmlCodeContent);
+
+  fs.writeFileSync(generatedFilePath, htmlWriter, "utf-8");
+
+  return generatedFilePath;
+}
+
 function generateDrumsEvents(
   trackMidi: MidiWriter.Track,
   drumNotes: (DrumNote[] | TimeSignatureChange)[],
