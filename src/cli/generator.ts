@@ -378,8 +378,8 @@ export function generateKeyboardProgram(
   const instrumentImage = path.join(assetsFolder, "image.png");
 
   let htmlWriter = `<!DOCTYPE html><html><head><title>${instrumentName} - QuoicouBeats</title>
-  <style>body {font-family: monospace;font-size: 1.5rem;text-align: center; }h1 {font-size: 3rem;}#instrument_image { width: 40px;}
-  #log {background-color: beige;border: black solid 1px;padding: 10px;position: fixed;bottom: 10px;right: 10px;max-height: 50vh;overflow: scroll;} #rec-text { font-size: 1rem; }
+  <style>body {font-family: monospace;font-size: 1.5rem;text-align: center; }h1 {font-size: 3rem;}#instrument_image { width: 40px;}#btns{display: none;}
+  #log-container {background-color: beige;border: black solid 1px;padding: 0 10px;margin: 10px;position: fixed;bottom: 10px;right: 10px;max-height: 50vh;overflow: scroll;} #rec-text { font-size: 1rem; }
   #rec-logo { width: 10px; height: 10px; border-radius: 5px; background: red; margin-right: 5px; } #rec {display: none; left: 30px; top: 30px; position: fixed; align-items: center;
   animation-duration: .8s; animation-name: clignoter; animation-iteration-count: infinite;} @keyframes clignoter { 0%   { opacity:1; } 40%   {opacity:0; } 100% { opacity:1; }}</style>
   <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
@@ -398,12 +398,15 @@ export function generateKeyboardProgram(
     htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}" note="${note}"></audio>`;
   });
 
-  htmlWriter += "<p id='log'></p>";
+  htmlWriter += `<div id="log-container"><div id="btns"><button onclick="copyToClipboard()" type="button">Copy in QB language</button>
+  <button onclick="reset()" type="button">Reset</button></div><p id="log"></p></div>`;
 
   htmlWriter += `<script>
     let firstDate = null;
     const log = document.getElementById("log");
     const rec = document.getElementById("rec");
+    const btns = document.getElementById("btns");
+    let notes = [];
 
     document.addEventListener('keydown', e => {
         if (e.repeat) return
@@ -416,12 +419,31 @@ export function generateKeyboardProgram(
         if (firstDate == null) {
             rec.style.display = "flex";
             firstDate = new Date().getTime();
+            btns.style.display = "block";
         }
         const currentMinute = (new Date().getTime() - firstDate) / 60000;
-        const tick = ${tickCount} * currentMinute;
-        log.innerText += noteSound.attributes.note.value + " at tick " + (Math.round(tick * 10) / 10) + "\\n";
+        const tick = Math.round((${tickCount} * currentMinute) * 10) / 10;
+        log.innerText += noteSound.attributes.note.value + " played at tick n°" + tick + "\\n";
+        notes.push({note: noteSound.attributes.note.value, tick: tick});
         noteSound.currentTime = 0;
         noteSound.play();
+    }
+
+    let copyToClipboard = () => {
+        let clipboard = "Track \\"My Music\\" {\\n\\tInstrument \\"${instrumentName}\\"\\n\tNotes {\\n"
+        for (const note of notes) {
+            clipboard += "\\t\\t" + note.note + " [" + note.tick + "]\\n";
+        }
+        clipboard += "\\t}\\n}";
+        navigator.clipboard.writeText(clipboard);
+    }
+
+    let reset = () => {
+        log.innerText = "";
+        notes = [];
+        firstDate = null;
+        rec.style.display = "none";
+        btns.style.display = "none";
     }
     </script></body></html>`;
 
