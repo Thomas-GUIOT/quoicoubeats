@@ -431,8 +431,11 @@ export function generateKeyboardProgram(
 
     let copyToClipboard = () => {
         let clipboard = "Track \\"My Music\\" {\\n\\tInstrument \\"${instrumentName}\\"\\n\tNotes {\\n"
-        for (const note of notes) {
-            clipboard += "\\t\\t" + note.note + " [" + note.tick + "]\\n";
+        for (let i = 0; i < notes.length; i++) {
+            const noteObject = notes[i];
+            const previousNoteTick = notes[i - 1]?.tick ?? 0;
+            console.log(previousNoteTick)
+            clipboard += "\\t\\t" + noteObject.note + " [" + (Math.round((noteObject.tick - previousNoteTick)*10)/10) + "]\\n";
         }
         clipboard += "\\t}\\n}";
         navigator.clipboard.writeText(clipboard);
