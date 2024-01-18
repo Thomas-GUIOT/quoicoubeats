@@ -434,8 +434,8 @@ export function generateKeyboardProgram(
         for (let i = 0; i < notes.length; i++) {
             const noteObject = notes[i];
             const previousNoteTick = notes[i - 1]?.tick ?? 0;
-            console.log(previousNoteTick)
-            clipboard += "\\t\\t" + noteObject.note + " [" + (Math.round((noteObject.tick - previousNoteTick)*10)/10) + "]\\n";
+            const delay = convertDelay((Math.round((noteObject.tick - previousNoteTick)*10)/10));
+            clipboard += "\\t\\t" + noteObject.note + (delay ? " [" + delay + "]\\n" : "\\n");
         }
         clipboard += "\\t}\\n}";
         navigator.clipboard.writeText(clipboard);
@@ -448,6 +448,28 @@ export function generateKeyboardProgram(
         rec.style.display = "none";
         btns.style.display = "none";
     }
+
+    const noteTypes = {
+        ronde: 4,
+        blanche: 2,
+        noire: 1,
+        croche: 0.5,
+        doubleCroche: 0.25,
+        tripleCroche: 0.125,
+        quadrupleCroche: 0.0625,
+    };
+
+    let convertDelay = (tick) => {
+        const result = [];
+        for (const noteType in noteTypes) {
+          const noteValue = noteTypes[noteType];
+          while (tick >= noteValue) {
+            result.push(noteType);
+            tick -= noteValue;
+          }
+        }
+        return result.join("");
+      }
     </script></body></html>`;
 
   fs.writeFileSync(generatedFilePath, htmlWriter, "utf-8");
