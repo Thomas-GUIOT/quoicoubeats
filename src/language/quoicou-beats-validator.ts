@@ -11,10 +11,11 @@ import {
   isTimeSignatureChange,
   Keyboard,
   Music,
-  PatternDeclaration,
+  PatternDeclaration, PitchBend,
   QuoicouBeatsAstType,
   Track,
 } from "./generated/ast.js";
+import {noteTypeToTicks} from "../cli/noteTypeToTicks.js";
 
 /**
  * Register custom validation checks.
@@ -31,6 +32,7 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
       validator.checkIsValidInstrumentMusic.bind(validator),
       validator.checkDefaultOctaveIsCorrectOrNecessary.bind(validator),
       validator.checkDefaultNoteTypeIsCorrectOrNecessary.bind(validator),
+      validator.checkDelayIsCorrect.bind(validator),
     ],
     Keyboard: [
       validator.checkIsValidInstrumentKeyboard.bind(validator),
@@ -40,6 +42,7 @@ export function registerValidationChecks(services: QuoicouBeatsServices) {
     PatternDeclaration: [validator.checkPatternIsCorrect.bind(validator)],
     Track: [validator.checkTrackNotesAreCorrect.bind(validator)],
     ClassicNote: [validator.checkOctaveIsCorrect.bind(validator)],
+    PitchBend: [validator.checkBendIsCorrect.bind(validator)],
   };
   registry.register(checks, validator);
 }
@@ -70,6 +73,11 @@ export class QuoicouBeatsValidator {
         node: music,
         property: "tickCount",
       });
+    } else if (music.tickCount % 1 !== 0) {
+      accept("error", "Song definition cannot be a float.", {
+        node: music,
+        property: "tickCount",
+      });
     }
   }
 
@@ -89,6 +97,12 @@ export class QuoicouBeatsValidator {
     if (
       !(Number.isInteger(denominator) && denominator > 0 && denominator <= 12)
     ) {
+      if (denominator % 1 !== 0) {
+          accept("error", "The denominator cannot be a float.", {
+          node: music,
+          property: "denominator",
+          });
+      }
       accept("error", "The denominator must be between 1 and 12.", {
         node: music,
         property: "denominator",
@@ -105,6 +119,12 @@ export class QuoicouBeatsValidator {
         [1, 2, 4, 8, 16].includes(numerator)
       )
     ) {
+      if (numerator % 1 !== 0) {
+        accept("error", "The numerator cannot be a float.", {
+        node: music,
+        property: "numerator",
+        });
+      }
       accept("error", "The numerator must be 1, 2, 4, 8 or 16.", {
         node: music,
         property: "numerator",
@@ -216,6 +236,11 @@ export class QuoicouBeatsValidator {
         node: music,
         property: "defaultOctave",
       });
+    } else if (music.defaultOctave % 1 !== 0) {
+      accept("error", `The default octave cannot be a float.`, {
+        node: music,
+        property: "defaultOctave",
+      });
     }
   }
 
@@ -265,6 +290,11 @@ export class QuoicouBeatsValidator {
   checkOctaveIsCorrect(note: ClassicNote, accept: ValidationAcceptor): void {
     if (note.octave !== undefined && (note.octave < -1 || note.octave > 9)) {
       accept("error", `The octave must be between -1 and 9.`, {
+        node: note,
+        property: "octave",
+      });
+    } else if (note.octave !== undefined && note.octave % 1 !== 0) {
+      accept("error", `The octave cannot be a float.`, {
         node: note,
         property: "octave",
       });
@@ -362,11 +392,41 @@ export class QuoicouBeatsValidator {
     }
   }
 
-  /**
-   * TODO: Vérifier que le delay est inférieur à la durée de la note précédente
-   * par exemple ce cas n'est pas possible :
-   *                 Re 4 noire (noire)
-   *                 Mi 4 ronde (noire)
-   * parce que la note Mi 4 est jouée avant la fin de la note Re 4 donc pas besoin de delay
-   */
+  checkBendIsCorrect(pitchBend: PitchBend, accept: ValidationAcceptor): void {
+    if (pitchBend.bend > 1 || pitchBend.bend < -1) {
+      accept("error", `The bend must be between -1 and 1.`, {
+        node: pitchBend,
+        property: "bend",
+      });
+    }
+  }
+
+  checkDelayIsCorrect(
+    music: Music,
+    accept: ValidationAcceptor
+  ): void {
+    music.tracks.forEach((track) => {
+        track.notes.filter(isClassicNote).forEach((note) => {
+          if (note.delay !== undefined) {
+            const delay = note.delay.map((delay) => noteTypeToTicks(delay, music.tickCount)).reduce((a, b) => a + b, 0);
+            const duration = noteTypeToTicks(note.noteType ?? music.defaultNoteType!, music.tickCount);
+            if (delay > duration) {
+              accept(
+                  "error",
+                  `The delay cannot be higher than the note duration. You might want to use a pause instead.`,
+                  {
+                    node: note,
+                    property: "delay",
+                  }
+              );
+            } else if (delay < 0) {
+              accept("error", `The delay cannot be lower than 0.`, {
+                node: note,
+                property: "delay",
+              });
+            }
+          }
+        });
+    });
+  }
 }
