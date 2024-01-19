@@ -11,9 +11,14 @@ fichier_path="$1"
 
 node ./bin/cli.js generate "$fichier_path"
 
-music_name=$(echo "$1" | cut -d'/' -f2 | cut -d'.' -f1)
+if [ -n "$2" ]; then
+    music_name=$(echo "$1" | rev | cut -d'/' -f1 | rev | cut -d'.' -f1)
+else
+    music_name=$(echo "$1" | cut -d'/' -f2 | cut -d'.' -f1)
+fi
 
 html_path=$(realpath "generated/${music_name}-midi-vizualizer.html")
+
 
 if [ "$(uname)" == "Darwin" ]; then
     open -na "Google Chrome" --args --user-data-dir=/tmp/temporary-chrome-profile-dir --disable-web-security --disable-site-isolation-trials "file://${html_path}"

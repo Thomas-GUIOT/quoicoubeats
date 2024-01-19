@@ -18,12 +18,13 @@
         }
       },
       {
-        "label": "Run Shell Script",
+        "label": "Run Launch QuoicouBeats Script",
         "type": "shell",
         "command": "sh",
         "args": [
           "${workspaceFolder}/launch.sh",
-          "${file}"
+          "${file}",
+          "tasks"
         ],
         "options": {
           "cwd": "${workspaceFolder}"
