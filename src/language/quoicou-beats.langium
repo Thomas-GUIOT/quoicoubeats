@@ -40,15 +40,15 @@ Track:
     'Track' name=STRING '{'
         instrument=Instrument
         'Notes' '{'
-            (notes+=PatternOrNote)+
+            (notes+=MusicEvent)+
         '}'
     '}';
 
 TimeSignatureChange:
     'Time' 'Signature' numerator=INT '/' denominator=INT;
 
-PatternOrNote:
-    (PatternReference | ClassicNote | DrumNote | TimeSignatureChange);
+MusicEvent:
+    (PatternReference | ClassicNote | DrumNote | TimeSignatureChange | PitchBend);
 
 PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
@@ -65,6 +65,9 @@ ClassicNote:
     (octave=INT)?
     (noteType=NoteType)?
     Note;
+
+PitchBend:
+    'Pitch' 'Bend' bend=INT (duration+=NoteType)+ ('(' (delay+=NoteType)+ ')')?;
 
 Instrument:
     'Instrument' instrument=STRING;

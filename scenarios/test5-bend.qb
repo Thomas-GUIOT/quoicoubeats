@@ -1,0 +1,18 @@
+Music "Chord and bend" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 128
+
+    Tracks {
+        Track "Piano" {
+            Instrument "Piano"
+            Notes {
+                Do 4 ronde
+                Re 4 noire (accord)
+                Fa 4 ronde (accord)
+                Sol 4 ronde
+                PitchBend 1 croche (croche)
+            }
+        }
+    }
+}

@@ -9,14 +9,13 @@ import {
   isDrumNote,
   isPatternReference,
   isTimeSignatureChange,
-  TimeSignatureChange,
+  TimeSignatureChange, isPitchBend, PitchBend,
 } from "../language/generated/ast.js";
 import MidiWriter from "midi-writer-js";
 import * as fs from "fs";
 
 import instruments from "../instruments.json" assert { type: "json" };
 import keyboard_instruments from "../keyboard_instruments.json" assert { type: "json" };
-import * as util from "util";
 
 const MIDI_ON_Stack: StackNote[] = [];
 const MIDI_OFF_Stack: StackNote[] = [];
@@ -113,7 +112,7 @@ function noteTypeToTicks(noteType: string, ticks: number): number {
 }
 
 function fillStacks(
-  notes: (ClassicNote | DrumNote | TimeSignatureChange)[],
+  notes: (ClassicNote | DrumNote | TimeSignatureChange | PitchBend)[],
   tickCount: number
 ) {
   let previousNoteMarks = {
@@ -126,14 +125,21 @@ function fillStacks(
     let noteType;
     if (isDrumNote(note)) noteType = "drum";
     else if (isClassicNote(note)) noteType = note.noteType;
-    if (isClassicNote(note) || isDrumNote(note)) {
-      const endTickMark = noteTypeToTicks(noteType ?? "ronde", tickCount);
+
+    if (isClassicNote(note) || isDrumNote(note) || isPitchBend(note)) {
+      let endTickMark = noteTypeToTicks(noteType ?? "ronde", tickCount);
+      if (isPitchBend(note)) {
+        endTickMark = note.duration.map((duration) => duration).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+      }
       const noteDelay = note.delay
         .flatMap((delay) => delay)
         .reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
-      const notePause = note.pause
-        .flatMap((pause) => pause)
-        .reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+      let notePause = 0;
+      if (isClassicNote(note) || isDrumNote(note)) {
+        notePause = note.pause
+            ?.flatMap((pause) => pause)
+            .reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+      }
       const noteStart = note.delay.length
         ? previousNoteMarks.start + noteDelay
         : previousNoteMarks.end + notePause;
@@ -166,15 +172,15 @@ function fillStacks(
   });
   MIDI_ON_Stack.sort((a, b) => {
     if (a.tickMark === b.tickMark) {
+      if (isPitchBend(a.note) || a.note.delay[0] === "accord") return -1;
       if (a.note.pause.length) return 1;
-      if (a.note.delay[0] === "accord") return -1;
       else return -1;
     } else return b.tickMark - a.tickMark;
   });
   MIDI_OFF_Stack.sort((a, b) => {
     if (a.tickMark === b.tickMark) {
-      if (a.note.pause.length) return 1;
       if (a.note.delay[0] === "accord") return -1;
+      if (a.note.pause.length) return 1;
       else return -1;
     } else return b.tickMark - a.tickMark;
   });
@@ -296,9 +302,21 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
       // console.log('on < off')
       note = MIDI_ON_Stack.pop();
       // console.log(`on: ${JSON.stringify(note.note) + note.noteType}`)
-      if (isTimeSignatureChange(note?.note)) {
+      if (isPitchBend(note?.note)) {
+        console.log(`> ON pitch bend of ${JSON.stringify({
+          bend: note?.note.bend,
+          delay: note?.note.delay?.map((delay) => delay).reduce((a, b) => a + noteTypeToTicks(b, ticks), 0),
+        })}`);
+        trackMidi.addEvent(
+          new MidiWriter.PitchBendEvent({
+            bend: note?.note.bend,
+            delta: note?.note.delay?.map((delay) => delay).reduce((a, b) => a + noteTypeToTicks(b, ticks), 0),
+          })
+        );
+        previousEvents.on = on;
+      } else if (isTimeSignatureChange(note?.note)) {
         console.log(
-          `time signature change: ${note?.note.numerator}/${note?.note.denominator}`
+          `> Time signature change: ${note?.note.numerator}/${note?.note.denominator}`
         );
         trackMidi.addEvent(
           new MidiWriter.TimeSignatureEvent(
@@ -309,7 +327,6 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
           )
         );
       } else {
-        console.log(`TRYING TO ADD: ${util.inspect(on)}}`);
         addOnEvent(trackMidi, note?.note, ticks);
         previousEvents.on = on;
       }
@@ -321,14 +338,27 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
       // console.log(`inspect: ${util.inspect(off)}}`)
       const previousOffEnd = previousEvents.on?.tickMark;
       const previousOffStart = previousEvents.off?.tickMark;
-      const mostRecentEvent =
-        previousOffEnd > previousOffStart ? previousOffEnd : previousOffStart;
-      console.log(`mostRecentEvent: ${mostRecentEvent}`);
-      console.log(`note.tickMark: ${note.tickMark}`);
+      const mostRecentEvent = previousOffEnd > previousOffStart ? previousOffEnd : previousOffStart;
+      // console.log(`mostRecentEvent: ${mostRecentEvent}`);
+      // console.log(`note.tickMark: ${note.tickMark}`);
       let delta = note.tickMark - mostRecentEvent;
       console.log(`delta: ${delta}`);
-      if (delta >= 0) addOffEvent(trackMidi, note.note, ticks, delta);
-      else addOffEvent(trackMidi, note.note, ticks);
+
+      if (isPitchBend(note?.note)) {
+        console.log(`> OFF pitch bend of ${JSON.stringify({
+          bend: 0,
+          delay: delta,
+        })}`)
+        trackMidi.addEvent(
+            new MidiWriter.PitchBendEvent({
+              bend: 0,
+              delta: delta,
+            })
+        );
+      } else {
+        if (delta >= 0) addOffEvent(trackMidi, note.note, ticks, delta);
+        else addOffEvent(trackMidi, note.note, ticks);
+      }
       previousEvents.off = off;
     }
   }
@@ -478,7 +508,7 @@ export function generateKeyboardProgram(
 }
 
 function highlightKeywords(code: string): string {
-  const keywords = ['Music', 'Tempo', 'TimeSignature', 'Ticks', 
+  const keywords = ['Music', 'Tempo', 'TimeSignature', 'Ticks',
   'Tracks', 'Track', 'Instrument', 'Notes', 'DefaultOctave', 'DefaultNoteType', 'KeyboardBinding'];
 
   keywords.forEach(keyword => {
@@ -504,7 +534,7 @@ export function generateMidiPlayerAndVizualizer(
   const musicName = model.music.name;
 
   let htmlWriter = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIDI Player & Vizualizer</title><style>.title {text-align: center;}#all-container {display: flex;justify-content: center;}body {font-family: 'Courier New', monospace;background-color: #f4f4f4;margin: 2;height: 100vh;}.code-container {border: 1px solid #ccc;border-radius: 5px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;}code {display: block;white-space: pre-wrap;}.keyword {color: blue;/* Couleur pour les mots clés */font-weight: bold;}.comment {color: green;/* Couleur pour les commentaires */font-style: italic;}.player_part {border: 1px solid #ccc;border-radius: 5px;margin-left: 10px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;padding: 10px;display: flex;flex-direction: column;align-items: center;}</style>
+  <title>MIDI Player & Vizualizer</title><style>.title {text-align: center;}#all-container {display: flex;justify-content: center;}body {font-family: 'Courier New', monospace;background-color: #f4f4f4;margin: 2vw;height: 100vh;}.code-container {border: 1px solid #ccc;border-radius: 5px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;}code {display: block;white-space: pre-wrap;}.keyword {color: blue;/* Couleur pour les mots clés */font-weight: bold;}.comment {color: green;/* Couleur pour les commentaires */font-style: italic;}.player_part {border: 1px solid #ccc;border-radius: 5px;margin-left: 10px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;padding: 10px;display: flex;flex-direction: column;align-items: center;}</style>
   <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script></head><body>
   <h1 class="title">MIDI Player & Vizualizer for ${musicName}</h1><div id="all-container"><div class="code-container"><code></code></div><div class="player_part"><midi-player loop sound-font visualizer="#myPianoRollVisualizer" src="${midiAudioPath}"></midi-player>
   <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="${midiAudioPath}"></midi-visualizer></div></div></body>
@@ -530,7 +560,7 @@ function generateDrumsEvents(
   drumNotes.forEach((note) => {
     if (isTimeSignatureChange(note)) {
       console.log(
-        `time signature change: ${note.numerator}/${note.denominator}`
+        `Time signature change: ${note.numerator}/${note.denominator}`
       );
       trackMidi.addEvent(
         new MidiWriter.TimeSignatureEvent(
@@ -612,7 +642,7 @@ export function generateJavaScript(
         new MidiWriter.ProgramChangeEvent({ instrument: instrumentNumber })
       );
       // Other instruments with classical notes (ensured by the validator)
-      let notes: (ClassicNote | TimeSignatureChange)[] = [];
+      let notes: (ClassicNote | TimeSignatureChange | PitchBend)[] = [];
       track.notes.forEach((patternOrNote) => {
         if (isClassicNote(patternOrNote)) {
           replaceDefaultValue(defaultOctave, defaultNoteType, patternOrNote);
@@ -630,7 +660,7 @@ export function generateJavaScript(
               }
             });
           }
-        } else if (isTimeSignatureChange(patternOrNote)) {
+        } else if (isTimeSignatureChange(patternOrNote) || isPitchBend(patternOrNote)) {
           notes.push(patternOrNote);
         }
       });
@@ -640,49 +670,6 @@ export function generateJavaScript(
     }
     midiTracks.push(trackMidi);
   });
-
-  // const notes = track.notesOrPatterns.flatMap(noteOrPattern => {
-  //     if (isNote(noteOrPattern)) {
-  //         return noteOrPattern;
-  //     } if (isDrumNote(noteOrPattern)) {
-  //         return noteOrPattern;
-  //     }
-  //     else {
-  //         const pattern = music.patterns.find(pattern => pattern.name === noteOrPattern.pattern.ref?.name);
-  //         if (pattern) {
-  //             let patternNotes: any[] = [];
-  //             let repeatCount = 1;
-  //             if (noteOrPattern.repeatCount != null) {
-  //                 repeatCount = parseInt(noteOrPattern.repeatCount);
-  //             }
-  //             for (let i = 0; i < repeatCount; i++) {
-  //                 patternNotes = patternNotes.concat(pattern.notes);
-  //             }
-  //             return patternNotes;
-  //         } else {
-  //             return [];
-  //         }
-  //     }
-  // });
-  // if (instrument === 10) {
-  //     const len = notes[0].bars.length;
-  //     for (let i=0; i<len; ++i) {
-  //         const batterie = notes.map(note => [note.note, note.bars[i]]);
-  //         const toPlay = batterie
-  //             .filter(instrument => instrument[1] === 1)
-  //             .map(instrument => instrument[0]);
-  //         if (toPlay.length === 0) {
-  //             continue;
-  //         }
-  //         const noteOptions: any = {
-  //             pitch: toPlay.map(note => getDrumInstrument(note)),
-  //             velocity: 100,
-  //             duration: 'd2',
-  //             channel: 10,
-  //         };
-  //         trackMidi.addEvent(new MidiWriter.NoteEvent(noteOptions));
-  //     }
-  // }
 
   const write = new MidiWriter.Writer(midiTracks);
   const midiData = write.buildFile();
