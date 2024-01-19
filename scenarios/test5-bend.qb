@@ -10,8 +10,8 @@ Music "Chord and bend" {
                 Do 4 ronde
                 Re 4 noire (accord)
                 Fa 4 ronde (accord)
-                Sol 4 ronde
-                PitchBend 1 croche (croche)
+                Sol 4 ronde v75
+                PitchBend 0.5 croche (croche)
             }
         }
     }

@@ -6,10 +6,10 @@ entry QuoicouBeats:
 
 Music:
     'Music' name=STRING '{'
-        'Tempo' tempo=INT
-        'Time' 'Signature' numerator=INT '/' denominator=INT
-        'Ticks' tickCount=INT
-        ('DefaultOctave' defaultOctave=INT)?
+        'Tempo' tempo=NUMBER
+        'Time' 'Signature' numerator=NUMBER '/' denominator=NUMBER
+        'Ticks' tickCount=NUMBER
+        ('DefaultOctave' defaultOctave=NUMBER)?
         ('DefaultNoteType' defaultNoteType=NoteType)?
         ('Patterns' '{'
             (patterns+=PatternDeclaration)+
@@ -45,16 +45,16 @@ Track:
     '}';
 
 TimeSignatureChange:
-    'Time' 'Signature' numerator=INT '/' denominator=INT;
+    'Time' 'Signature' numerator=NUMBER '/' denominator=NUMBER;
 
 MusicEvent:
     (PatternReference | ClassicNote | DrumNote | TimeSignatureChange | PitchBend);
 
 PatternReference:
-    'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=INT)?;
+    'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=NUMBER)?;
 
 fragment Note:
-    ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')?;
+    ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')? ('v' velocity=NUMBER)?;
 
 DrumNote:
     element=DRUMNOTE
@@ -62,18 +62,18 @@ DrumNote:
 
 ClassicNote:
     note=NOTE
-    (octave=INT)?
+    (octave=NUMBER)?
     (noteType=NoteType)?
     Note;
 
 PitchBend:
-    'Pitch' 'Bend' bend=INT (duration+=NoteType)+ ('(' (delay+=NoteType)+ ')')?;
+    'Pitch' 'Bend' bend=NUMBER (duration+=NoteType)+ ('(' (delay+=NoteType)+ ')')?;
 
 Instrument:
     'Instrument' instrument=STRING;
 
 terminal DRUMNOTE: /kd|sd|ch/;
-terminal INT returns number: /(\-1|[0-9]+)/;
+terminal NUMBER returns number: /[+-]?([0-9]*[.])?[0-9]+/;
 terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche|accord/;
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;

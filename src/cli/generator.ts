@@ -201,7 +201,7 @@ function fillStacks(
 function addOnEvent(track: MidiWriter.Track, note: ClassicNote, ticks: number) {
   const noteOptions: any = {
     pitch: [noteToPitch(note)],
-    velocity: 100,
+    velocity: note.velocity ?? 100,
   };
   let delay = note.delay
     .flatMap((delay: string) => delay)
