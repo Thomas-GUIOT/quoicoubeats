@@ -407,12 +407,16 @@ export function generateKeyboardProgram(
   const midiAudioPath = path.join("..", audioPath);
   const keyboardBindingConfig = model.keyboard?.bindingConf;
   const instrumentName = keyboardBindingConfig?.instrument.instrument;
-  const noteType = keyboardBindingConfig.bindings[0].note.$type;
   const instrumentNumber =
     Object.entries(keyboard_instruments).find(
       ([key, _]) => key === instrumentName
     )?.[1] ?? 0;
   const musicName = model.music.name;
+
+  const noteType = keyboardBindingConfig.bindings[0].note.$type;
+
+  const defaultOctave = 4;
+  const defaultNoteType = "noire";
 
   const assetsFolder = path.join(
     "assets",
@@ -509,6 +513,15 @@ export function generateKeyboardProgram(
     };
 
     let convertDelay = (tick) => {
+        const defaultNoteTypeValue = noteTypes[\"${defaultNoteType}\"];
+        let delay = true;
+        const type = \"${noteType.toString()}\"
+        
+        // We determine if the wait is a delay or a pause
+        if(tick > defaultNoteTypeValue && type === \"ClassicNote\") {
+            tick -= defaultNoteTypeValue;
+            delay = false;
+        }
         let result = [];
         for (const noteType in noteTypes) {
           const noteValue = noteTypes[noteType];
@@ -517,17 +530,14 @@ export function generateKeyboardProgram(
             tick -= noteValue;
           }
         }
-        if(result.length === 0) return "";
-        const noteType = "${noteType.toString()}"
-        if(noteType === "ClassicNote") {
-          if(result.includes("ronde")) {
-            result.shift();
-            return "[" + result.join("") + "]";
-          }
-          return "(" + result.join("") + ")";
+        if(type === "ClassicNote") {
+            if(result.length === 0) return \"${defaultOctave} ${defaultNoteType}\";
+            return \"${defaultOctave} ${defaultNoteType} \" + (delay ? "(" : "[") + result.join("") + (delay ? ")" : "]");
         }
-        else
+        else {
+          if(result.length === 0) return "";
           return "[" + result.join("") + "]";
+        }
       }
     </script></body></html>`;
 
