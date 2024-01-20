@@ -17,17 +17,3 @@ Music "Tchoin" {
         }
     }
 }
-
-KeyboardBinding {
-    Instrument "Piano"
-        Bindings{
-            Key W -> Do
-            Key X -> Re
-            Key C -> Mi
-            Key V -> Fa
-            Key B -> Sol
-            Key N -> La
-            Key ? -> Si
-        }
-    
-}

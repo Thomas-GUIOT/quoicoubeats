@@ -1,0 +1,23 @@
+{
+  "scopeName": "source.qb",
+  "patterns": [
+    {
+      "include": "#keywords"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(Music|Tempo|TimeSignature|Ticks|DefaultOctave|DefaultNoteType|Tracks|Track|Instrument|Notes|KeyboardBinding|Bindings)\\b",
+          "name": "keyword.qb"
+        },
+        {
+          "begin": "\"",
+          "end": "\"",
+          "name": "string.qb"
+        }
+      ]
+    }
+  }
+}

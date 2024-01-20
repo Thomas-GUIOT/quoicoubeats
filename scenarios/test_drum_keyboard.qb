@@ -1,0 +1,39 @@
+Music "Music" {
+    Tempo 180
+    TimeSignature 4/4
+    Ticks 128
+    DefaultOctave 4
+    DefaultNoteType ronde
+
+    Tracks {
+        Track "My Music" {
+            Instrument "Drums"
+            Notes {
+                kd
+                kd [noiretripleCrochequadrupleCroche]
+                ch [doubleCrochetripleCroche]
+                kd [crochedoubleCroche]
+                kd [noirecroche]
+                ch [crochedoubleCroche]
+                sd [crochetripleCrochequadrupleCroche]
+                kd [crochedoubleCrochetripleCroche]
+                kd [noiretripleCrochequadrupleCroche]
+                ch [doubleCrochetripleCroche]
+                kd [crochedoubleCroche]
+                kd [noiredoubleCrochetripleCroche]
+                ch [crochedoubleCrochetripleCroche]
+                ch [doubleCrochetripleCroche]
+                sd [doubleCrochetripleCroche]
+            }
+        }
+    }
+}
+
+KeyboardBinding {
+    Instrument "Drums"
+	Bindings {
+        Key W -> kd
+        Key X -> ch
+        Key C -> sd
+    }
+}
