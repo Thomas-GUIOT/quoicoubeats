@@ -1,47 +1,58 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "Build quoicou-beats",
-        "command": "npm run langium:generate && npm run build",
-        "type": "shell",
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "detail": "Langium: Generate grammar and build the quoicou-beats language",
-        "icon": {
-          "color": "terminal.ansiGreen",
-          "id": "server-process"
-        }
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build quoicou-beats",
+      "command": "npm run langium:generate && npm run build",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
       },
-      {
-        "label": "Run Launch QuoicouBeats Script",
-        "type": "shell",
-        "command": "sh",
-        "args": [
-          "${workspaceFolder}/launch.sh",
-          "${file}",
-          "tasks"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        },
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "problemMatcher": []
+      "detail": "Langium: Generate grammar and build the quoicou-beats language",
+      "icon": {
+        "color": "terminal.ansiGreen",
+        "id": "server-process"
       }
-    ],  "compounds": [
-        {
-          "name": "Run Node.js on current scenario file",
-          "configurations": ["Exécuter Node.js sur le fichier scenarios actuel"]
-        }
-      ],
-      "files.associations": {
-        "*.qb": "Exécuter Node.js sur le fichier scenarios actuel"
-      }
+    },
+    {
+      "label": "Run Launch QuoicouBeats Script",
+      "type": "shell",
+      "command": "sh",
+      "args": ["${workspaceFolder}/launch.sh", "${file}","chrome","no-keyboard", "tasks"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Launch QuoicouBeats Script for keyboard",
+      "type": "shell",
+      "command": "sh",
+      "args": ["${workspaceFolder}/launch.sh", "${file}","chrome","keyboard", "tasks"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Node.js on current scenario file",
+      "configurations": ["Exécuter Node.js sur le fichier scenarios actuel"]
+    }
+  ],
+  "files.associations": {
+    "*.qb": "Exécuter Node.js sur le fichier scenarios actuel"
+  }
 }
