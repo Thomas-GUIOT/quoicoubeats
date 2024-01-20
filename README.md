@@ -57,10 +57,10 @@ The `assets` folder is available [here](/generated/assets/).
 #### Disable CORS Policy on Chrome
 
 - MacOS (in Terminal)
-  `open -na Google\ Chrome --args --user-data-dir=/tmp/temporary-chrome-profile-dir --disable-web-security --disable-site-isolation-trials``
+  `open -na Google\ Chrome --args --user-data-dir=/tmp/temporary-chrome-profile-dir --disable-web-security --disable-site-isolation-trials`
 
 - Windows (from "Run" dialog [Windows+R] or start menu in Windows 8+)
-  `chrome.exe --user-data-dir=%TMP%\temporary-chrome-profile-dir --disable-web-security --disable-site-isolation-trials``
+  `chrome.exe --user-data-dir=%TMP%\temporary-chrome-profile-dir --disable-web-security --disable-site-isolation-trials`
 
 - Linux
-  `google-chrome --disable-web-security``
+  `google-chrome --disable-web-security`
