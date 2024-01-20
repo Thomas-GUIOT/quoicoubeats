@@ -9,7 +9,9 @@ import {
   isDrumNote,
   isPatternReference,
   isTimeSignatureChange,
-  TimeSignatureChange, isPitchBend, PitchBend,
+  TimeSignatureChange,
+  isPitchBend,
+  PitchBend,
 } from "../language/generated/ast.js";
 import MidiWriter from "midi-writer-js";
 import * as fs from "fs";
@@ -129,7 +131,9 @@ function fillStacks(
     if (isClassicNote(note) || isDrumNote(note) || isPitchBend(note)) {
       let endTickMark = noteTypeToTicks(noteType ?? "ronde", tickCount);
       if (isPitchBend(note)) {
-        endTickMark = note.duration.map((duration) => duration).reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+        endTickMark = note.duration
+          .map((duration) => duration)
+          .reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
       }
       const noteDelay = note.delay
         .flatMap((delay) => delay)
@@ -137,8 +141,8 @@ function fillStacks(
       let notePause = 0;
       if (isClassicNote(note) || isDrumNote(note)) {
         notePause = note.pause
-            ?.flatMap((pause) => pause)
-            .reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
+          ?.flatMap((pause) => pause)
+          .reduce((a, b) => a + noteTypeToTicks(b, tickCount), 0);
       }
       const noteStart = note.delay.length
         ? previousNoteMarks.start + noteDelay
@@ -303,14 +307,20 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
       note = MIDI_ON_Stack.pop();
       // console.log(`on: ${JSON.stringify(note.note) + note.noteType}`)
       if (isPitchBend(note?.note)) {
-        console.log(`> ON pitch bend of ${JSON.stringify({
-          bend: note?.note.bend,
-          delay: note?.note.delay?.map((delay) => delay).reduce((a, b) => a + noteTypeToTicks(b, ticks), 0),
-        })}`);
+        console.log(
+          `> ON pitch bend of ${JSON.stringify({
+            bend: note?.note.bend,
+            delay: note?.note.delay
+              ?.map((delay) => delay)
+              .reduce((a, b) => a + noteTypeToTicks(b, ticks), 0),
+          })}`
+        );
         trackMidi.addEvent(
           new MidiWriter.PitchBendEvent({
             bend: note?.note.bend,
-            delta: note?.note.delay?.map((delay) => delay).reduce((a, b) => a + noteTypeToTicks(b, ticks), 0),
+            delta: note?.note.delay
+              ?.map((delay) => delay)
+              .reduce((a, b) => a + noteTypeToTicks(b, ticks), 0),
           })
         );
         previousEvents.on = on;
@@ -338,22 +348,25 @@ function generateMidiEvents(trackMidi: MidiWriter.Track, ticks: number) {
       // console.log(`inspect: ${util.inspect(off)}}`)
       const previousOffEnd = previousEvents.on?.tickMark;
       const previousOffStart = previousEvents.off?.tickMark;
-      const mostRecentEvent = previousOffEnd > previousOffStart ? previousOffEnd : previousOffStart;
+      const mostRecentEvent =
+        previousOffEnd > previousOffStart ? previousOffEnd : previousOffStart;
       // console.log(`mostRecentEvent: ${mostRecentEvent}`);
       // console.log(`note.tickMark: ${note.tickMark}`);
       let delta = note.tickMark - mostRecentEvent;
       console.log(`delta: ${delta}`);
 
       if (isPitchBend(note?.note)) {
-        console.log(`> OFF pitch bend of ${JSON.stringify({
-          bend: 0,
-          delay: delta,
-        })}`)
+        console.log(
+          `> OFF pitch bend of ${JSON.stringify({
+            bend: 0,
+            delay: delta,
+          })}`
+        );
         trackMidi.addEvent(
-            new MidiWriter.PitchBendEvent({
-              bend: 0,
-              delta: delta,
-            })
+          new MidiWriter.PitchBendEvent({
+            bend: 0,
+            delta: delta,
+          })
         );
       } else {
         if (delta >= 0) addOffEvent(trackMidi, note.note, ticks, delta);
@@ -428,7 +441,7 @@ export function generateKeyboardProgram(
     htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}" note="${note}"></audio>`;
   });
 
-  htmlWriter += `<div id="log-container"><div id="btns"><button onclick="copyToClipboard()" type="button">Copy in QB language</button>
+  htmlWriter += `<div id="log-container"><div id="btns"><button id="copy-btn" onclick="copyToClipboard()" type="button">Copy in QB language</button>
   <button onclick="reset()" type="button">Reset</button></div><p id="log"></p></div>`;
 
   htmlWriter += `<script>
@@ -436,6 +449,7 @@ export function generateKeyboardProgram(
     const log = document.getElementById("log");
     const rec = document.getElementById("rec");
     const btns = document.getElementById("btns");
+    const copybtn = document.getElementById("copy-btn");
     let notes = [];
 
     document.addEventListener('keydown', e => {
@@ -469,6 +483,10 @@ export function generateKeyboardProgram(
         }
         clipboard += "\\t}\\n}";
         navigator.clipboard.writeText(clipboard);
+        copybtn.innerText = "Copied !";
+        setTimeout(() => {
+            copybtn.innerText = "Copy in QB language";
+        }, 3000);
     }
 
     let reset = () => {
@@ -508,17 +526,27 @@ export function generateKeyboardProgram(
 }
 
 function highlightKeywords(code: string): string {
-  const keywords = ['Music', 'Tempo', 'TimeSignature', 'Ticks',
-  'Tracks', 'Track', 'Instrument', 'Notes', 'DefaultOctave', 'DefaultNoteType', 'KeyboardBinding'];
+  const keywords = [
+    "Music",
+    "Tempo",
+    "TimeSignature",
+    "Ticks",
+    "Tracks",
+    "Track",
+    "Instrument",
+    "Notes",
+    "DefaultOctave",
+    "DefaultNoteType",
+    "KeyboardBinding",
+  ];
 
-  keywords.forEach(keyword => {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+  keywords.forEach((keyword) => {
+    const regex = new RegExp(`\\b${keyword}\\b`, "g");
     code = code.replace(regex, `<span class="keyword">${keyword}</span>`);
   });
 
   return code;
 }
-
 
 export function generateMidiPlayerAndVizualizer(
   model: QuoicouBeats,
@@ -527,7 +555,10 @@ export function generateMidiPlayerAndVizualizer(
   audioPath: string
 ): string | null {
   const data = extractDestinationAndName(filePath, destination);
-  const generatedFilePath = `${path.join(data.destination, data.name)}-midi-vizualizer.html`;
+  const generatedFilePath = `${path.join(
+    data.destination,
+    data.name
+  )}-midi-vizualizer.html`;
 
   const midiAudioPath = path.join("..", audioPath);
 
@@ -540,12 +571,12 @@ export function generateMidiPlayerAndVizualizer(
   <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="${midiAudioPath}"></midi-visualizer></div></div></body>
   </html>`;
 
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  const fileContent = fs.readFileSync(filePath, "utf-8");
 
   const highlightedCode = highlightKeywords(fileContent);
 
   const htmlCodeContent = `<code>${highlightedCode}</code>`;
-  htmlWriter = htmlWriter.replace('<code></code>', htmlCodeContent);
+  htmlWriter = htmlWriter.replace("<code></code>", htmlCodeContent);
 
   fs.writeFileSync(generatedFilePath, htmlWriter, "utf-8");
 
@@ -660,7 +691,10 @@ export function generateJavaScript(
               }
             });
           }
-        } else if (isTimeSignatureChange(patternOrNote) || isPitchBend(patternOrNote)) {
+        } else if (
+          isTimeSignatureChange(patternOrNote) ||
+          isPitchBend(patternOrNote)
+        ) {
           notes.push(patternOrNote);
         }
       });
