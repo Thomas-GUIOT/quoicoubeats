@@ -407,6 +407,7 @@ export function generateKeyboardProgram(
   const midiAudioPath = path.join("..", audioPath);
   const keyboardBindingConfig = model.keyboard?.bindingConf;
   const instrumentName = keyboardBindingConfig?.instrument.instrument;
+  const noteType = keyboardBindingConfig.bindings[0].note.$type;
   const instrumentNumber =
     Object.entries(keyboard_instruments).find(
       ([key, _]) => key === instrumentName
@@ -479,7 +480,7 @@ export function generateKeyboardProgram(
             const noteObject = notes[i];
             const previousNoteTick = notes[i - 1]?.tick ?? 0;
             const delay = convertDelay((Math.round((noteObject.tick - previousNoteTick)*10)/10));
-            clipboard += "\\t\\t" + noteObject.note + (delay ? " [" + delay + "]\\n" : "\\n");
+            clipboard += "\\t\\t" + noteObject.note + " " + delay + "\\n";
         }
         clipboard += "\\t}\\n}";
         navigator.clipboard.writeText(clipboard);
@@ -508,7 +509,7 @@ export function generateKeyboardProgram(
     };
 
     let convertDelay = (tick) => {
-        const result = [];
+        let result = [];
         for (const noteType in noteTypes) {
           const noteValue = noteTypes[noteType];
           while (tick >= noteValue) {
@@ -516,7 +517,17 @@ export function generateKeyboardProgram(
             tick -= noteValue;
           }
         }
-        return result.join("");
+        if(result.length === 0) return "";
+        const noteType = "${noteType.toString()}"
+        if(noteType === "ClassicNote") {
+          if(result.includes("ronde")) {
+            result.shift();
+            return "[" + result.join("") + "]";
+          }
+          return "(" + result.join("") + ")";
+        }
+        else
+          return "[" + result.join("") + "]";
       }
     </script></body></html>`;
 
