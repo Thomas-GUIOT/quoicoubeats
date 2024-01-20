@@ -11,11 +11,12 @@ import {
   isTimeSignatureChange,
   Keyboard,
   Music,
-  PatternDeclaration, PitchBend,
+  PatternDeclaration,
+  PitchBend,
   QuoicouBeatsAstType,
   Track,
 } from "./generated/ast.js";
-import {noteTypeToTicks} from "../cli/noteTypeToTicks.js";
+import { noteTypeToTicks } from "../cli/noteTypeToTicks.js";
 
 /**
  * Register custom validation checks.
@@ -85,10 +86,16 @@ export class QuoicouBeatsValidator {
     for (const track of music.tracks) {
       const instrument = track.instrument.instrument;
       if (!Object.keys(instruments).includes(instrument))
-        accept("error", `Instrument ${instrument} is not supported.`, {
-          node: track,
-          property: "instrument",
-        });
+        accept(
+          "error",
+          `Instrument ${instrument} is not supported.\nSupported: ${Object.keys(
+            instruments
+          ).join(", ")}`,
+          {
+            node: track,
+            property: "instrument",
+          }
+        );
     }
   }
 
@@ -98,10 +105,10 @@ export class QuoicouBeatsValidator {
       !(Number.isInteger(denominator) && denominator > 0 && denominator <= 12)
     ) {
       if (denominator % 1 !== 0) {
-          accept("error", "The denominator cannot be a float.", {
+        accept("error", "The denominator cannot be a float.", {
           node: music,
           property: "denominator",
-          });
+        });
       }
       accept("error", "The denominator must be between 1 and 12.", {
         node: music,
@@ -121,8 +128,8 @@ export class QuoicouBeatsValidator {
     ) {
       if (numerator % 1 !== 0) {
         accept("error", "The numerator cannot be a float.", {
-        node: music,
-        property: "numerator",
+          node: music,
+          property: "numerator",
         });
       }
       accept("error", "The numerator must be 1, 2, 4, 8 or 16.", {
@@ -308,10 +315,16 @@ export class QuoicouBeatsValidator {
   ): void {
     const instrument = keyboard.bindingConf.instrument.instrument;
     if (!Object.keys(keyboard_instrument).includes(instrument))
-      accept("error", `Instrument ${instrument} is not supported.`, {
-        node: keyboard.bindingConf,
-        property: "instrument",
-      });
+      accept(
+        "error",
+        `Instrument ${instrument} is not supported.\nSupported: ${Object.keys(
+          keyboard_instrument
+        ).join(", ")}`,
+        {
+          node: keyboard.bindingConf,
+          property: "instrument",
+        }
+      );
   }
 
   checkIsValidNoteWithInstrument(
@@ -401,32 +414,34 @@ export class QuoicouBeatsValidator {
     }
   }
 
-  checkDelayIsCorrect(
-    music: Music,
-    accept: ValidationAcceptor
-  ): void {
+  checkDelayIsCorrect(music: Music, accept: ValidationAcceptor): void {
     music.tracks.forEach((track) => {
-        track.notes.filter(isClassicNote).forEach((note) => {
-          if (note.delay !== undefined) {
-            const delay = note.delay.map((delay) => noteTypeToTicks(delay, music.tickCount)).reduce((a, b) => a + b, 0);
-            const duration = noteTypeToTicks(note.noteType ?? music.defaultNoteType!, music.tickCount);
-            if (delay > duration) {
-              accept(
-                  "error",
-                  `The delay cannot be higher than the note duration. You might want to use a pause instead.`,
-                  {
-                    node: note,
-                    property: "delay",
-                  }
-              );
-            } else if (delay < 0) {
-              accept("error", `The delay cannot be lower than 0.`, {
+      track.notes.filter(isClassicNote).forEach((note) => {
+        if (note.delay !== undefined) {
+          const delay = note.delay
+            .map((delay) => noteTypeToTicks(delay, music.tickCount))
+            .reduce((a, b) => a + b, 0);
+          const duration = noteTypeToTicks(
+            note.noteType ?? music.defaultNoteType!,
+            music.tickCount
+          );
+          if (delay > duration) {
+            accept(
+              "error",
+              `The delay cannot be higher than the note duration. You might want to use a pause instead.`,
+              {
                 node: note,
                 property: "delay",
-              });
-            }
+              }
+            );
+          } else if (delay < 0) {
+            accept("error", `The delay cannot be lower than 0.`, {
+              node: note,
+              property: "delay",
+            });
           }
-        });
+        }
+      });
     });
   }
 }
