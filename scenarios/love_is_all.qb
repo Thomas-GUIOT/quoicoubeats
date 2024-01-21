@@ -1,0 +1,128 @@
+Music "Love Is All" {
+    Tempo 112
+    TimeSignature 4/4
+    Ticks 128
+
+    Patterns {
+        "drums_init" {
+            cc
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            kd [noire]
+            oh (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+        }
+        "drums" {
+            cc [noire]
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            kd [noire]
+            oh (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+        }
+        "drums1.1" {
+            cc [crocheTriplet]
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            kd [noire]
+            oh (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+        }
+        "drums2" {
+            cc [noire]
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            sd [croche]
+            sd [croche]
+            kd (accord)
+            sd [croche]
+        }
+        "roll" {
+            oh [noire]
+            kd (accord)
+            oh [noire]
+            sd (accord)
+
+            sd [noire]
+            kd (accord)
+            sd [crocheTriplet]
+            sd [crocheTriplet]
+            sd [crocheTriplet]
+            kd (accord)
+            sd [crocheTriplet]
+            sd [crocheTriplet]
+        }
+        "bridge" {
+            oh [croche]
+            kd (accord)
+            oh [noire]
+            oh [croche]
+            kd (accord)
+            oh [noire]
+        }
+    }
+
+    Tracks {
+        Track "Batterie" {
+            Instrument "Drums"
+            Notes {
+                pattern "drums_init" x1
+                pattern "drums" x2
+                pattern "roll" x1
+                pattern "drums1.1" x1
+                pattern "drums" x2
+                pattern "drums2" x1
+
+                Tempo 75
+                oh [croche]
+                kd (accord)
+                TimeSignature 3/4
+                oh [noire]
+                oh [croche]
+                kd (accord)
+                oh [noire]
+
+                Tempo 70
+                pattern "bridge" x3
+
+                Tempo 85
+                pattern "bridge" x4
+
+                Tempo 100
+                pattern "bridge" x4
+
+                Tempo 110
+                pattern "bridge" x3
+
+            }
+        }
+    }
+}

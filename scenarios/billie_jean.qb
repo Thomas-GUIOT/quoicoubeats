@@ -15,6 +15,17 @@ Music "Billie Jean" {
 
             ch [croche]
         }
+        "drums2" {
+            kd [croche]
+            ch (accord)
+
+            ch [croche]
+
+            sd [croche]
+            ch (accord)
+
+            oh [croche]
+        }
         "bass" {
             Fa# 4 croche
             Do# 5 croche
@@ -118,17 +129,8 @@ Music "Billie Jean" {
 
                 ch [croche]
 
-                kd [croche]
-                ch (accord)
-
-                ch [croche]
-
-                sd [croche]
-                ch (accord)
-
-                ch [croche]
-
                 pattern "drums" x 66
+                pattern "drums2" x 1
             }
         }
         Track "Basse" {
@@ -148,10 +150,10 @@ Music "Billie Jean" {
             Notes {
                 pattern "synth_init" [ronde ronde ronde ronde ronde ronde ronde ronde ronde ronde]
                 pattern "synth" x3
-                pattern "synth2_hold" x1
-                pattern "synth_init" [croche]
                 pattern "synth2" x1
                 pattern "synth_init" [blanche]
+                pattern "synth2_hold" x1
+                pattern "synth_init" [croche]
                 pattern "synth" x2
                 pattern "synth2_hold" x1
                 pattern "synth_init" [croche]

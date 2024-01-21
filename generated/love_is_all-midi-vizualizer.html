@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIDI Player & Vizualizer</title><style>.title {text-align: center;}#all-container {display: flex;justify-content: center;}body {font-family: 'Courier New', monospace;background-color: #f4f4f4;margin: 2vw;height: 100vh;}.code-container {border: 1px solid #ccc;border-radius: 5px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;}code {display: block;white-space: pre-wrap;}.keyword {color: blue;/* Couleur pour les mots clés */font-weight: bold;}.comment {color: green;/* Couleur pour les commentaires */font-style: italic;}.player_part {border: 1px solid #ccc;border-radius: 5px;margin-left: 10px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;padding: 10px;display: flex;flex-direction: column;align-items: center;}</style>
+  <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script></head><body>
+  <h1 class="title">MIDI Player & Vizualizer for Love Is All</h1><div id="all-container"><div class="code-container"><code><span class="keyword">Music</span> "Love Is All" {
+    <span class="keyword">Tempo</span> 112
+    <span class="keyword">TimeSignature</span> 4/4
+    <span class="keyword">Ticks</span> 128
+
+    Patterns {
+        "drums_init" {
+            cc
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            kd [noire]
+            oh (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+        }
+        "drums" {
+            cc [noire]
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            kd [noire]
+            oh (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+        }
+        "drums1.1" {
+            cc [crocheTriplet]
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            kd [noire]
+            oh (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+        }
+        "drums2" {
+            cc [noire]
+            kd (accord)
+
+            kd [noire]
+            sd (accord)
+
+            kd [noire]
+            sd (accord)
+            oh (accord)
+
+            sd [croche]
+            sd [croche]
+            kd (accord)
+            sd [croche]
+        }
+        "roll" {
+            oh [noire]
+            kd (accord)
+            oh [noire]
+            sd (accord)
+
+            sd [noire]
+            kd (accord)
+            sd [crocheTriplet]
+            sd [crocheTriplet]
+            sd [crocheTriplet]
+            kd (accord)
+            sd [crocheTriplet]
+            sd [crocheTriplet]
+        }
+        "bridge" {
+            oh [croche]
+            kd (accord)
+            oh [noire]
+            oh [croche]
+            kd (accord)
+            oh [noire]
+        }
+    }
+
+    <span class="keyword">Tracks</span> {
+        <span class="keyword">Track</span> "Batterie" {
+            <span class="keyword">Instrument</span> "Drums"
+            <span class="keyword">Notes</span> {
+                pattern "drums_init" x1
+                pattern "drums" x2
+                pattern "roll" x1
+                pattern "drums1.1" x1
+                pattern "drums" x2
+                pattern "drums2" x1
+
+                <span class="keyword">Tempo</span> 75
+                oh [croche]
+                kd (accord)
+                <span class="keyword">TimeSignature</span> 3/4
+                oh [noire]
+                oh [croche]
+                kd (accord)
+                oh [noire]
+
+                <span class="keyword">Tempo</span> 70
+                pattern "bridge" x3
+
+                <span class="keyword">Tempo</span> 85
+                pattern "bridge" x4
+
+                <span class="keyword">Tempo</span> 100
+                pattern "bridge" x4
+
+                <span class="keyword">Tempo</span> 110
+                pattern "bridge" x3
+
+            }
+        }
+    }
+}
+</code></div><div class="player_part"><midi-player loop sound-font visualizer="#myPianoRollVisualizer" src="..\generated\love_is_all.mid"></midi-player>
+  <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="..\generated\love_is_all.mid"></midi-visualizer></div></div></body>
+  </html>

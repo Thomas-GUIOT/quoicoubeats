@@ -33,7 +33,7 @@ Binding:
     
 PatternDeclaration:
     name=STRING '{'
-        (notes+=(DrumNote|ClassicNote))+
+        (notes+=MusicEvent)+
     '}';
 
 Track:
@@ -47,8 +47,11 @@ Track:
 TimeSignatureChange:
     'Time' 'Signature' numerator=NUMBER '/' denominator=NUMBER;
 
+TempoChange:
+    'Tempo' tempo=NUMBER;
+
 MusicEvent:
-    (PatternReference | ClassicNote | DrumNote | TimeSignatureChange | PitchBend);
+    (PatternReference | ClassicNote | DrumNote | TimeSignatureChange | TempoChange | PitchBend);
 
 PatternReference:
     'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=NUMBER)? ('[' (pause+=NoteType)+ ']')?;
@@ -72,9 +75,9 @@ PitchBend:
 Instrument:
     'Instrument' instrument=STRING;
 
-terminal DRUMNOTE: /kd|sd|ch/;
+terminal DRUMNOTE: /kd|bd|sd|ch|hh|rc|cc|oh/;
 terminal NUMBER returns number: /[+-]?([0-9]*[.])?[0-9]+/;
-terminal NoteType: /(?:noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche)(?:Pointee)?|accord/g;
+terminal NoteType: /(?:noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche)(?:Pointee|Triplet)?|accord/g;
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
 terminal STRING: /"([^"\\]|\\.)*"/;

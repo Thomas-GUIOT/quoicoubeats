@@ -11,7 +11,7 @@ import {
   isTimeSignatureChange,
   TimeSignatureChange,
   isPitchBend,
-  PitchBend,
+  PitchBend, isTempoChange, TempoChange,
 } from "../language/generated/ast.js";
 import MidiWriter from "midi-writer-js";
 import * as fs from "fs";
@@ -111,16 +111,24 @@ function noteTypeToTicks(noteType: string, ticks: number): number {
   };
 
   const isPointee = noteType.endsWith("Pointee");
-  const baseNoteType = isPointee ? noteType.slice(0, -7) : noteType;
-  const result = noteTypeToTicks[baseNoteType] * (isPointee ? 1.5 : 1) * ticks;
+  const isTriplet = noteType.endsWith("Triplet");
+
+  let baseNoteType = noteType;
+
+  if (isPointee || isTriplet) {
+    baseNoteType = noteType.slice(0, -7); // Supprime "Pointee" ou "Triplet" à la fin
+  }
+
+  const result = noteTypeToTicks[baseNoteType] * (isPointee ? 1.5 : (isTriplet ? 2/3 : 1)) * ticks;
 
   if (result !== undefined) return result;
   throw new Error(`Type de note inconnu: ${noteType}`);
 }
 
 
+
 function fillStacks(
-  notes: (ClassicNote | DrumNote | TimeSignatureChange | PitchBend)[],
+  notes: (ClassicNote | DrumNote | TimeSignatureChange | PitchBend | TempoChange)[],
   tickCount: number
 ) {
   let previousNoteMarks = {
@@ -174,6 +182,12 @@ function fillStacks(
       console.log(
         `ADD time signature change: ${note.numerator}/${note.denominator}`
       );
+      MIDI_ON_Stack.push({
+        tickMark: previousNoteMarks.end,
+        note: note,
+      });
+    } else if (isTempoChange(note)) {
+      console.log(`ADD tempo change: ${note.tempo}`);
       MIDI_ON_Stack.push({
         tickMark: previousNoteMarks.end,
         note: note,
@@ -240,8 +254,8 @@ function addDrumEvent(
   let pitch = note.map((note) => getDrumInstrument(note.element));
   const noteOptions: any = {
     pitch: pitch,
-    velocity: 100,
     duration: "t1",
+    velocity: 100,
     channel: 10,
   };
   let pause = note[0].pause
@@ -612,7 +626,7 @@ export function generateMidiPlayerAndVizualizer(
 
 function generateDrumsEvents(
   trackMidi: MidiWriter.Track,
-  drumNotes: (DrumNote[] | TimeSignatureChange)[],
+  drumNotes: (DrumNote[] | TimeSignatureChange | TempoChange)[],
   ticks: number
 ) {
   drumNotes.forEach((note) => {
@@ -628,9 +642,10 @@ function generateDrumsEvents(
           8
         )
       );
-      return;
-    }
-    addDrumEvent(trackMidi, note, ticks);
+    } else if (isTempoChange(note)) {
+        console.log(`Tempo change: ${note.tempo}`);
+        trackMidi.setTempo(note.tempo);
+    } else addDrumEvent(trackMidi, note, ticks);
   });
 }
 
@@ -677,11 +692,13 @@ export function generateJavaScript(
     trackMidi.setTempo(model.music.tempo);
 
     if (track.instrument.instrument === "Drums") {
-      let newDrumNotes: (DrumNote[] | TimeSignatureChange)[] = [];
+      let newDrumNotes: (DrumNote[] | TimeSignatureChange | TempoChange)[] = [];
       track.notes.forEach((patternOrNote) => {
+        console.log(`patternOrNote: ${JSON.stringify(patternOrNote.$type)}`);
         if (isTimeSignatureChange(patternOrNote)) {
           newDrumNotes.push(patternOrNote);
-          return;
+        } else if (isTempoChange(patternOrNote)) {
+          newDrumNotes.push(patternOrNote);
         } else if (isDrumNote(patternOrNote)) {
           console.log(`note: ${patternOrNote.element} delay: ${patternOrNote.delay}`);
           if (patternOrNote.delay[0] === "accord") {
@@ -693,12 +710,19 @@ export function generateJavaScript(
             // On répète le pattern autant de fois que demandé
             const repeatCount = patternOrNote.repeatCount ? patternOrNote.repeatCount : 1;
             if (patternOrNote.pause.length) {
+              console.log(`pause du pattern: ${patternOrNote.pause}`);
               (patternOrNote.pattern.ref?.notes[0] as DrumNote).pause = patternOrNote.pause;
             }
             let pausedFirstNote: DrumNote | null = null;
             if (patternOrNote.pause.length) {
-              pausedFirstNote = {...patternOrNote.pattern.ref?.notes[0] as DrumNote}
-              pausedFirstNote.pause = patternOrNote.pause;
+              pausedFirstNote = {
+                element: (patternOrNote.pattern.ref?.notes[0] as DrumNote).element,
+                delay: (patternOrNote.pattern.ref?.notes[0] as DrumNote).delay,
+                pause: patternOrNote.pause,
+                velocity: (patternOrNote.pattern.ref?.notes[0] as DrumNote).velocity,
+                $container: patternOrNote.pattern.ref!,
+                $type: DrumNote,
+              }
             }
             for (let i = 0; i < repeatCount; i++) {
                 patternOrNote.pattern.ref?.notes.forEach((note, index) => {
@@ -710,6 +734,7 @@ export function generateJavaScript(
                         );
                       } else {
                         if (index == 0 && i == 0 && pausedFirstNote) {
+                          console.log('ON UTILISE FIRST NOTE')
                           newDrumNotes.push([pausedFirstNote]);
                         } else newDrumNotes.push([note]);
                       }
@@ -724,7 +749,7 @@ export function generateJavaScript(
         new MidiWriter.ProgramChangeEvent({ instrument: instrumentNumber })
       );
       // Other instruments with classical notes (ensured by the validator)
-      let notes: (ClassicNote | TimeSignatureChange | PitchBend)[] = [];
+      let notes: (ClassicNote | TimeSignatureChange | PitchBend | TempoChange)[] = [];
       track.notes.forEach((patternOrNote) => {
         if (isClassicNote(patternOrNote)) {
           replaceDefaultValue(defaultOctave, defaultNoteType, patternOrNote);
@@ -753,7 +778,8 @@ export function generateJavaScript(
           }
         } else if (
           isTimeSignatureChange(patternOrNote) ||
-          isPitchBend(patternOrNote)
+          isPitchBend(patternOrNote) ||
+          isTempoChange(patternOrNote)
         ) {
           notes.push(patternOrNote);
         }

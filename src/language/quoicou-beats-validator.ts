@@ -7,7 +7,7 @@ import {
   DrumNote,
   isClassicNote,
   isDrumNote,
-  isPatternReference,
+  isPatternReference, isTempoChange,
   isTimeSignatureChange,
   Keyboard,
   Music,
@@ -145,7 +145,7 @@ export class QuoicouBeatsValidator {
     accept: ValidationAcceptor
   ): void {
     const isDrumNotes = isDrumNote(pattern.notes[0]);
-    pattern.notes.forEach((note) => {
+    pattern.notes.filter(e => !isTempoChange(e) && !isTimeSignatureChange(e)).forEach((note) => {
       if (isDrumNotes != isDrumNote(note)) {
         accept(
           "error",
@@ -163,7 +163,7 @@ export class QuoicouBeatsValidator {
   checkTrackNotesAreCorrect(track: Track, accept: ValidationAcceptor): void {
     const isDrum = track.instrument.instrument === "Drums";
     track.notes
-      .filter((note) => !isTimeSignatureChange(note))
+      .filter((note) => !isTimeSignatureChange(note) && !isTempoChange(note))
       .forEach((patternOrNote) => {
         if (isPatternReference(patternOrNote)) {
           if (
