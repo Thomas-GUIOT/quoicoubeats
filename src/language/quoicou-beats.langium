@@ -51,7 +51,7 @@ MusicEvent:
     (PatternReference | ClassicNote | DrumNote | TimeSignatureChange | PitchBend);
 
 PatternReference:
-    'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=NUMBER)?;
+    'pattern' pattern=[PatternDeclaration:STRING] ('x' repeatCount=NUMBER)? ('[' (pause+=NoteType)+ ']')?;
 
 fragment Note:
     ('(' (delay+=NoteType)+ ')' | '[' (pause+=NoteType)+ ']')? ('v' velocity=NUMBER)?;
@@ -74,7 +74,7 @@ Instrument:
 
 terminal DRUMNOTE: /kd|sd|ch/;
 terminal NUMBER returns number: /[+-]?([0-9]*[.])?[0-9]+/;
-terminal NoteType: /noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche|accord/;
+terminal NoteType: /(?:noire|blanche|ronde|croche|doubleCroche|tripleCroche|quadrupleCroche)(?:Pointee)?|accord/g;
 hidden terminal WS: /\s+/;
 terminal ID: /[a-zA-Z_]\w*/;
 terminal STRING: /"([^"\\]|\\.)*"/;

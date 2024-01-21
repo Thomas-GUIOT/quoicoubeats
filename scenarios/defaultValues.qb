@@ -1,4 +1,4 @@
-Music "Tchoin" {
+Music "Default" {
     Tempo 180
     TimeSignature 4/4
     Ticks 128

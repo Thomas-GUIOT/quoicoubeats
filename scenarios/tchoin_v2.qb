@@ -1,27 +1,41 @@
-Music "Tchoin" {
+Music "Pattern" {
     Tempo 180
     Time Signature 4/4
     Ticks 128
+    DefaultOctave 5
 
-    declare "Piano" {
-        Sol croche
-        Sol croche
-        Do croche
-        Re# croche
-        Re# croche
-        Silence croche
-        Sol# croche
-        Sol# croche
-        Silence croche
-        Re croche
-        Fa croche
-        Silence croche
+    Patterns {
+        "Piano1" {
+            Sol croche
+            Sol croche
+            Do croche
+            Re# croche
+            Re# croche
+            Sol# croche [croche]
+            Sol# croche
+            Re croche [croche]
+            Fa croche
+        }
+        "Piano2" {
+            Sol croche [croche]
+            Sol croche
+            Do croche
+            Re# croche
+            Re# croche
+            Sol# croche [croche]
+            Sol# croche
+            Re croche [croche]
+            Fa croche
+        }
     }
 
     Tracks {
         Track "Piano" {
-            Instrument 1
-            pattern "Piano" x12
+            Instrument "Piano"
+            Notes {
+                pattern "Piano1"
+                pattern "Piano2" x12
+            }
         }
     }
 }

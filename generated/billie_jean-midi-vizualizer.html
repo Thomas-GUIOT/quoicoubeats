@@ -1,7 +1,10 @@
-Music "Billie Jean" {
-    Tempo 117
-    TimeSignature 4/4
-    Ticks 128
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIDI Player & Vizualizer</title><style>.title {text-align: center;}#all-container {display: flex;justify-content: center;}body {font-family: 'Courier New', monospace;background-color: #f4f4f4;margin: 2vw;height: 100vh;}.code-container {border: 1px solid #ccc;border-radius: 5px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;}code {display: block;white-space: pre-wrap;}.keyword {color: blue;/* Couleur pour les mots clés */font-weight: bold;}.comment {color: green;/* Couleur pour les commentaires */font-style: italic;}.player_part {border: 1px solid #ccc;border-radius: 5px;margin-left: 10px;overflow: auto;padding: 20px;background-color: #fff;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);max-width: 600px;width: 100%;padding: 10px;display: flex;flex-direction: column;align-items: center;}</style>
+  <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script></head><body>
+  <h1 class="title">MIDI Player & Vizualizer for Billie Jean</h1><div id="all-container"><div class="code-container"><code><span class="keyword">Music</span> "Billie Jean" {
+    <span class="keyword">Tempo</span> 117
+    <span class="keyword">TimeSignature</span> 4/4
+    <span class="keyword">Ticks</span> 128
 
     Patterns {
         "drums" {
@@ -104,10 +107,10 @@ Music "Billie Jean" {
         }
     }
 
-    Tracks {
-        Track "Batterie" {
-            Instrument "Drums"
-            Notes {
+    <span class="keyword">Tracks</span> {
+        <span class="keyword">Track</span> "Batterie" {
+            <span class="keyword">Instrument</span> "Drums"
+            <span class="keyword">Notes</span> {
                 kd
                 ch (accord)
 
@@ -131,9 +134,9 @@ Music "Billie Jean" {
                 pattern "drums" x 66
             }
         }
-        Track "Basse" {
-            Instrument "Bass"
-            Notes {
+        <span class="keyword">Track</span> "Basse" {
+            <span class="keyword">Instrument</span> "Bass"
+            <span class="keyword">Notes</span> {
                 pattern "bass" x16 [ronde ronde]
                 pattern "bass2" x2
                 pattern "bass" x2
@@ -143,9 +146,9 @@ Music "Billie Jean" {
                 pattern "bass" x2
             }
         }
-        Track "Synth Square" {
-            Instrument "Synth Square"
-            Notes {
+        <span class="keyword">Track</span> "Synth Square" {
+            <span class="keyword">Instrument</span> "Synth Square"
+            <span class="keyword">Notes</span> {
                 pattern "synth_init" [ronde ronde ronde ronde ronde ronde ronde ronde ronde ronde]
                 pattern "synth" x3
                 pattern "synth2_hold" x1
@@ -159,3 +162,6 @@ Music "Billie Jean" {
         }
     }
 }
+</code></div><div class="player_part"><midi-player loop sound-font visualizer="#myPianoRollVisualizer" src="..\generated\billie_jean.mid"></midi-player>
+  <midi-visualizer type="piano-roll" id="myPianoRollVisualizer" src="..\generated\billie_jean.mid"></midi-visualizer></div></div></body>
+  </html>
