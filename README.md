@@ -1,11 +1,11 @@
 # Quoicoubeats
 
-
 ## Launch Guide
 
 Welcome to the launch guide for QuoicouBeats Automation. Follow the steps below to set up and successfully launch the project.
 
 ### Prerequisites
+
 Ensure that you have Node.js in LTS version installed on your system.
 
 ### Installation Steps
@@ -54,10 +54,10 @@ Start-Process -FilePath ".\Launch.bat" -ArgumentList "path_to_the_scenarios", "c
 These steps should enable you to successfully launch QuoicouBeats Automation on your machine. If you encounter any issues, make sure you have followed all the steps in the guide and meet the prerequisites.
 
 ## Important Note for Firefox Users
-If you are using Firefox, please be aware that it is not possible to disable CORS security via command line. The only method is to manually navigate to about:config in the address bar, modify the Mozilla configuration, and set `security.fileuri.strict_origin_policy` to `false`. 
+
+If you are using Firefox, please be aware that it is not possible to disable CORS security via command line. The only method is to manually navigate to about:config in the address bar, modify the Mozilla configuration, and set `security.fileuri.strict_origin_policy` to `false`.
 
 After this modification, the MIDI player will be available on both the visualization interface and the interactive keyboard interface.
-
 
 ## Installation and Usage of VS Code Extension
 
@@ -114,6 +114,8 @@ Currently, two instruments are implemented: **Drums** and **Piano**.
 ### Usage
 
 Once your scenario is written, generate the files using the Langium Program. Once done, a message will appear on the console indicating the locations of the **.MIDI** and **Keyboard Program** files. To launch and fully utilize the Keyboard Program, ensure compliance with the following requirements :
+
+Note: The `.html` file is only generated if the `KeyboardBinding` entity is present in the script. If there is no configuration for the keyboard, then the HTML file will not be generated.
 
 ### Requirements
 
