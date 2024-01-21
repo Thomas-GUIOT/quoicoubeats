@@ -69,21 +69,6 @@ To install the QuoicouBeats Automation extension for Visual Studio Code, follow 
 4. Go to the `qbeats-ext` folder, and you will find the `qbeats-ext.vsix` file.
 5. Once the extension is installed, scenario files with the `.qb` extension will be colorized, and error detection will be enabled.
 
-### Using the Keyboard in VS Code:
-
-The keyboard can be launched directly in VS Code through the extension.
-
-1. Generate the interface using the following command:
-
-```bash
-./launch.sh <path_to_the_scenarios> no-browser keyboard
-```
-
-2. Open the scenario file with the `.qb` extension.
-3. Use the keyboard shortcut `Ctrl+Alt+K` or `Cmd+Alt+K` to activate the keyboard.
-
-Now, you can enjoy the enhanced features of QuoicouBeats Automation directly within Visual Studio Code.
-
 ## The support for user interactive input
 
 ### How to write a scenario
@@ -111,9 +96,24 @@ In this example, the Drums instrument is configured to play the note _kd_ when _
 
 Currently, two instruments are implemented: **Drums** and **Piano**.
 
+### Using the Keyboard in VS Code:
+
+The keyboard can be launched directly in VS Code through the extension.
+
+1. Generate the interface using the following command:
+
+```bash
+./launch.sh <path_to_the_scenarios> no-browser keyboard
+```
+
+2. Open the scenario file with the `.qb` extension.
+3. Use the keyboard shortcut `Ctrl+Alt+K` or `Cmd+Alt+K` to activate the keyboard.
+
+Now, you can enjoy the enhanced features of QuoicouBeats Automation directly within Visual Studio Code.
+
 ### Usage
 
-Once your scenario is written, generate the files using the Langium Program. Once done, a message will appear on the console indicating the locations of the **.MIDI** and **Keyboard Program** files. To launch and fully utilize the Keyboard Program, ensure compliance with the following requirements :
+Once your scenario is written, generate the files using the Langium Program. Once done, a message will appear on the console indicating the locations of the **.MIDI** and **Keyboard Program** files. To launch and fully utilize the Keyboard Program, ensure compliance with the following requirements.
 
 Note: The `.html` file is only generated if the `KeyboardBinding` entity is present in the script. If there is no configuration for the keyboard, then the HTML file will not be generated.
 
