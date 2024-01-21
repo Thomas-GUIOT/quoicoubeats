@@ -33,7 +33,10 @@ KeyboardBinding {
     Instrument "Drums"
 	Bindings {
         Key W -> kd
-        Key X -> ch
         Key C -> sd
+        Key V -> ch
+        Key N -> rc
+        Key , -> cc
+        Key ; -> oh
     }
 }

@@ -11,7 +11,9 @@ import {
   isTimeSignatureChange,
   TimeSignatureChange,
   isPitchBend,
-  PitchBend, isTempoChange, TempoChange,
+  PitchBend,
+  isTempoChange,
+  TempoChange,
 } from "../language/generated/ast.js";
 import MidiWriter from "midi-writer-js";
 import * as fs from "fs";
@@ -119,16 +121,23 @@ function noteTypeToTicks(noteType: string, ticks: number): number {
     baseNoteType = noteType.slice(0, -7); // Supprime "Pointee" ou "Triplet" à la fin
   }
 
-  const result = noteTypeToTicks[baseNoteType] * (isPointee ? 1.5 : (isTriplet ? 2/3 : 1)) * ticks;
+  const result =
+    noteTypeToTicks[baseNoteType] *
+    (isPointee ? 1.5 : isTriplet ? 2 / 3 : 1) *
+    ticks;
 
   if (result !== undefined) return result;
   throw new Error(`Type de note inconnu: ${noteType}`);
 }
 
-
-
 function fillStacks(
-  notes: (ClassicNote | DrumNote | TimeSignatureChange | PitchBend | TempoChange)[],
+  notes: (
+    | ClassicNote
+    | DrumNote
+    | TimeSignatureChange
+    | PitchBend
+    | TempoChange
+  )[],
   tickCount: number
 ) {
   let previousNoteMarks = {
@@ -461,7 +470,13 @@ export function generateKeyboardProgram(
       binding.note.$type === DrumNote
         ? binding.note.element
         : binding.note.note;
-    const notePath = path.join(assetsFolder, note + ".mp3");
+    let noteRealName = note;
+    // KD and BD are similar. So we keep only one
+    if (binding.note.$type === DrumNote && note === "bd") noteRealName = "kd";
+    // HH and CH are similar. So we keep only one
+    if (binding.note.$type === DrumNote && note === "hh") noteRealName = "ch";
+
+    const notePath = path.join(assetsFolder, noteRealName + ".mp3");
 
     htmlWriter += `<p>${keyToLowerCase}: ${note}</p><audio src="${notePath}" id="${keyToLowerCase}" note="${note}"></audio>`;
   });
@@ -643,8 +658,8 @@ function generateDrumsEvents(
         )
       );
     } else if (isTempoChange(note)) {
-        console.log(`Tempo change: ${note.tempo}`);
-        trackMidi.setTempo(note.tempo);
+      console.log(`Tempo change: ${note.tempo}`);
+      trackMidi.setTempo(note.tempo);
     } else addDrumEvent(trackMidi, note, ticks);
   });
 }
@@ -700,47 +715,56 @@ export function generateJavaScript(
         } else if (isTempoChange(patternOrNote)) {
           newDrumNotes.push(patternOrNote);
         } else if (isDrumNote(patternOrNote)) {
-          console.log(`note: ${patternOrNote.element} delay: ${patternOrNote.delay}`);
+          console.log(
+            `note: ${patternOrNote.element} delay: ${patternOrNote.delay}`
+          );
           if (patternOrNote.delay[0] === "accord") {
-            (newDrumNotes[newDrumNotes.length - 1] as DrumNote[]).push(patternOrNote);
+            (newDrumNotes[newDrumNotes.length - 1] as DrumNote[]).push(
+              patternOrNote
+            );
           } else {
             newDrumNotes.push([patternOrNote]);
           }
         } else if (isPatternReference(patternOrNote)) {
-            // On répète le pattern autant de fois que demandé
-            const repeatCount = patternOrNote.repeatCount ? patternOrNote.repeatCount : 1;
-            if (patternOrNote.pause.length) {
-              console.log(`pause du pattern: ${patternOrNote.pause}`);
-              (patternOrNote.pattern.ref?.notes[0] as DrumNote).pause = patternOrNote.pause;
-            }
-            let pausedFirstNote: DrumNote | null = null;
-            if (patternOrNote.pause.length) {
-              pausedFirstNote = {
-                element: (patternOrNote.pattern.ref?.notes[0] as DrumNote).element,
-                delay: (patternOrNote.pattern.ref?.notes[0] as DrumNote).delay,
-                pause: patternOrNote.pause,
-                velocity: (patternOrNote.pattern.ref?.notes[0] as DrumNote).velocity,
-                $container: patternOrNote.pattern.ref!,
-                $type: DrumNote,
+          // On répète le pattern autant de fois que demandé
+          const repeatCount = patternOrNote.repeatCount
+            ? patternOrNote.repeatCount
+            : 1;
+          if (patternOrNote.pause.length) {
+            console.log(`pause du pattern: ${patternOrNote.pause}`);
+            (patternOrNote.pattern.ref?.notes[0] as DrumNote).pause =
+              patternOrNote.pause;
+          }
+          let pausedFirstNote: DrumNote | null = null;
+          if (patternOrNote.pause.length) {
+            pausedFirstNote = {
+              element: (patternOrNote.pattern.ref?.notes[0] as DrumNote)
+                .element,
+              delay: (patternOrNote.pattern.ref?.notes[0] as DrumNote).delay,
+              pause: patternOrNote.pause,
+              velocity: (patternOrNote.pattern.ref?.notes[0] as DrumNote)
+                .velocity,
+              $container: patternOrNote.pattern.ref!,
+              $type: DrumNote,
+            };
+          }
+          for (let i = 0; i < repeatCount; i++) {
+            patternOrNote.pattern.ref?.notes.forEach((note, index) => {
+              // Check for compilation but this should never happen thanks to the validator
+              if (isDrumNote(note)) {
+                if (note.delay[0] === "accord") {
+                  (newDrumNotes[newDrumNotes.length - 1] as DrumNote[]).push(
+                    note
+                  );
+                } else {
+                  if (index == 0 && i == 0 && pausedFirstNote) {
+                    console.log("ON UTILISE FIRST NOTE");
+                    newDrumNotes.push([pausedFirstNote]);
+                  } else newDrumNotes.push([note]);
+                }
               }
-            }
-            for (let i = 0; i < repeatCount; i++) {
-                patternOrNote.pattern.ref?.notes.forEach((note, index) => {
-                  // Check for compilation but this should never happen thanks to the validator
-                  if (isDrumNote(note)) {
-                      if (note.delay[0] === "accord") {
-                        (newDrumNotes[newDrumNotes.length - 1] as DrumNote[]).push(
-                            note
-                        );
-                      } else {
-                        if (index == 0 && i == 0 && pausedFirstNote) {
-                          console.log('ON UTILISE FIRST NOTE')
-                          newDrumNotes.push([pausedFirstNote]);
-                        } else newDrumNotes.push([note]);
-                      }
-                  }
-                });
-            }
+            });
+          }
         }
       });
       generateDrumsEvents(trackMidi, newDrumNotes, tickCount);
@@ -749,7 +773,12 @@ export function generateJavaScript(
         new MidiWriter.ProgramChangeEvent({ instrument: instrumentNumber })
       );
       // Other instruments with classical notes (ensured by the validator)
-      let notes: (ClassicNote | TimeSignatureChange | PitchBend | TempoChange)[] = [];
+      let notes: (
+        | ClassicNote
+        | TimeSignatureChange
+        | PitchBend
+        | TempoChange
+      )[] = [];
       track.notes.forEach((patternOrNote) => {
         if (isClassicNote(patternOrNote)) {
           replaceDefaultValue(defaultOctave, defaultNoteType, patternOrNote);
@@ -761,7 +790,9 @@ export function generateJavaScript(
             : 1;
           let pausedFirstNote: ClassicNote | null = null;
           if (patternOrNote.pause.length) {
-            pausedFirstNote = {...patternOrNote.pattern.ref?.notes[0] as ClassicNote}
+            pausedFirstNote = {
+              ...(patternOrNote.pattern.ref?.notes[0] as ClassicNote),
+            };
             pausedFirstNote.pause = patternOrNote.pause;
           }
           for (let i = 0; i < repeatCount; i++) {
@@ -769,7 +800,7 @@ export function generateJavaScript(
               // Check for compilation but this should never happen thanks to the validator
               if (isClassicNote(note)) {
                 if (index == 0 && i == 0 && pausedFirstNote) {
-                    notes.push(pausedFirstNote);
+                  notes.push(pausedFirstNote);
                 } else {
                   notes.push(note);
                 }
