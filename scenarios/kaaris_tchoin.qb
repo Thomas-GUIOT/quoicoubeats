@@ -1,6 +1,6 @@
 Music "Pattern" {
     Tempo 180
-    Time Signature 4/4
+    TimeSignature 4/4
     Ticks 128
     DefaultOctave 5
 

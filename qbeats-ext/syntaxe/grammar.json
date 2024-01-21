@@ -9,7 +9,7 @@
     "keywords": {
       "patterns": [
         {
-          "match": "\\b(Music|Tempo|TimeSignature|Ticks|DefaultOctave|DefaultNoteType|Tracks|Track|Instrument|Notes|KeyboardBinding|Bindings)\\b",
+          "match": "\\b(Music|Tempo|TimeSignature|Ticks|DefaultOctave|DefaultNoteType|Tracks|Track|Instrument|Notes|KeyboardBinding|Bindings|Patterns|Key|PitchBend)\\b",
           "name": "keyword.qb"
         },
         {
