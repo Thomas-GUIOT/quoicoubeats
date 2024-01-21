@@ -41,7 +41,7 @@ Use one of the following scenarios based on your operating system:
 ### On Windows with the Launch.bat script
 
 ```powershell
-Start-Process -FilePath ".\Launch.bat" -ArgumentList "path_to_the_scenarios", "chrome|firefox", "keyboard|no-keyboard" .... -Wait
+Start-Process -FilePath ".\Launch.bat" -ArgumentList "path_to_the_scenarios", "chrome|firefox|no-browser", "keyboard|no-keyboard" .... -Wait
 ```
 
 ### With Visual Studio Code (Linux and Mac only)
@@ -80,7 +80,7 @@ The keyboard can be launched directly in VS Code through the extension.
 ```
 
 2. Open the scenario file with the `.qb` extension.
-3. Use the keyboard shortcut `Ctrl+Shift+K` to activate the keyboard.
+3. Use the keyboard shortcut `Ctrl+Alt+K` or `Cmd+Alt+K` to activate the keyboard.
 
 Now, you can enjoy the enhanced features of QuoicouBeats Automation directly within Visual Studio Code.
 
