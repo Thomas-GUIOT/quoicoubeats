@@ -24,6 +24,9 @@ else
     html_path=$(realpath "generated/${music_name}-midi-vizualizer.html")
 fi
 
+if [ "$browser" == "no-browser" ]; then
+    exit 0
+fi
 
 if [ "$browser" == "chrome" ]; then
     if [ "$(uname)" == "Darwin" ]; then
